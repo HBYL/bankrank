@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}外链管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}外链管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">外链管理</h2>
+        <p class="text-slate-500 mt-1">管理征信查询外部链接</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加链接</button>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>链接名称</th>
+                    <th>链接地址</th>
+                    <th>链接类型</th>
+                    <th>状态</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in links %}
+                <tr>
+                    <td>{{ l.id }}</td>
+                    <td class="font-medium">{{ l.link_name }}</td>
+                    <td class="max-w-xs truncate">
+                        <a href="{{ l.link_url }}" target="_blank" class="text-sky-500 hover:underline">{{ l.link_url }}</a>
+                    </td>
+                    <td>{{ l.link_type or '--' }}</td>
+                    <td>
+                        {% if l.status == 1 %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">启用</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">禁用</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ l.update_time.strftime('%Y-%m-%d') if l.update_time else '--' }}</td>
+                    <td>
+                        <button onclick="showEditModal({{ l|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除该链接？')">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="link_id" value="{{ l.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-slate-400 py-8">暂无外链数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 添加/编辑弹窗 -->
+<div id="link-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[500px] shadow-2xl">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加链接</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="link_id" id="form-link-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-slate-600 text-sm font-medium mb-2">链接名称</label>
+                    <input type="text" name="link_name" id="form-link-name" class="input-field" required>
+                </div>
+                <div>
+                    <label class="block text-slate-600 text-sm font-medium mb-2">链接地址</label>
+                    <input type="url" name="link_url" id="form-link-url" class="input-field" required>
+                </div>
+                <div>
+                    <label class="block text-slate-600 text-sm font-medium mb-2">链接类型</label>
+                    <input type="text" name="link_type" id="form-link-type" class="input-field" placeholder="如: credit">
+                </div>
+                <div id="status-field" class="hidden">
+                    <label class="block text-slate-600 text-sm font-medium mb-2">状态</label>
+                    <select name="status" id="form-status" class="input-field">
+                        <option value="1">启用</option>
+                        <option value="0">禁用</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加链接');
+    $('#form-action').val('add');
+    $('#form-link-id').val('');
+    $('#form-link-name').val('');
+    $('#form-link-url').val('');
+    $('#form-link-type').val('credit');
+    $('#status-field').addClass('hidden');
+    $('#link-modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(link) {
+    $('#modal-title').text('编辑链接');
+    $('#form-action').val('edit');
+    $('#form-link-id').val(link.id);
+    $('#form-link-name').val(link.link_name);
+    $('#form-link-url').val(link.link_url);
+    $('#form-link-type').val(link.link_type);
+    $('#form-status').val(link.status);
+    $('#status-field').removeClass('hidden');
+    $('#link-modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() {
+    $('#link-modal').removeClass('flex').addClass('hidden');
+}
+</script>
+{% endblock %}

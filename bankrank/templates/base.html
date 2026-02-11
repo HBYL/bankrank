@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}银行对公信用评估业务系统{% endblock %}</title>
+    <script type="text/javascript" src="{{ url_for('static', filename='framework/jquery-1.11.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='new/tailwindcss.js') }}"></script>
+    <link href="{{ url_for('static', filename='new/font-awesome.min.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='new/echarts.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='new/chart.umd.min.js') }}"></script>
+    <link href="{{ url_for('static', filename='new/animate.min.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='new/layer.js') }}"></script>
+    <link href="{{ url_for('static', filename='new/layer.css') }}" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .sidebar-item { @apply flex items-center px-4 py-3 text-slate-600 hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 cursor-pointer border-l-4 border-transparent; }
+            .sidebar-item.active { @apply bg-sky-50 text-sky-600 font-medium border-l-4 border-sky-500; }
+            .card { @apply bg-white rounded-lg shadow-md p-5 transition-all duration-300 hover:shadow-lg border border-slate-200; }
+            .stat-card { @apply bg-white rounded-lg shadow-md p-5 transition-all duration-300 hover:shadow-lg border border-slate-200 border-l-4 border-l-sky-500; }
+            .btn-primary { @apply bg-sky-500 text-white py-2 px-4 rounded-md hover:bg-sky-600 transition-all duration-200 shadow-sm; }
+            .btn-secondary { @apply bg-slate-100 text-slate-700 py-2 px-4 rounded-md hover:bg-slate-200 transition-all duration-200 border border-slate-300; }
+            .btn-danger { @apply bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-all duration-200; }
+            .btn-success { @apply bg-emerald-500 text-white py-2 px-4 rounded-md hover:bg-emerald-600 transition-all duration-200; }
+            .btn-warning { @apply bg-amber-500 text-white py-2 px-4 rounded-md hover:bg-amber-600 transition-all duration-200; }
+            .input-field { @apply bg-white border border-slate-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent text-slate-700 placeholder-slate-400; }
+            .table-business { @apply bg-white text-slate-700 border border-slate-200 w-full; }
+            .table-business th { @apply bg-slate-50 text-sky-600 border-b border-slate-200 px-4 py-3 text-left font-semibold; }
+            .table-business td { @apply border-b border-slate-200 px-4 py-3; }
+            .table-business tr:hover { @apply bg-sky-50/50; }
+            .nav-link { @apply text-slate-600 hover:text-sky-600 transition-colors px-4 py-2 rounded-md hover:bg-sky-50; }
+            .nav-link.active { @apply text-sky-600 bg-sky-50 font-medium; }
+            .glass-card { @apply bg-white/80 backdrop-blur-md rounded-xl shadow-xl p-6 border border-white/20; }
+            .risk-low { @apply bg-emerald-100 text-emerald-700 border-emerald-300; }
+            .risk-medium { @apply bg-amber-100 text-amber-700 border-amber-300; }
+            .risk-high { @apply bg-red-100 text-red-700 border-red-300; }
+        }
+    </style>
+    <style>
+        :root { --primary-color: #0ea5e9; --bg-light: #f8fafc; --text-dark: #1e293b; --text-gray: #64748b; --border-color: #e2e8f0; }
+        body { background-color: var(--bg-light); color: var(--text-dark); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .input-field + i, .input-field ~ i, input + i, input ~ i { display: none !important; }
+        h1, h2, h3, h4, h5, h6 { color: var(--text-dark); }
+        .text-primary { color: var(--primary-color) !important; }
+        .loading { border: 3px solid var(--border-color); border-top: 3px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px rgba(14, 165, 233, 0.5); } 50% { box-shadow: 0 0 20px rgba(14, 165, 233, 0.8); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        select.input-field { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+        .hero-bg { background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%); }
+        .page-bg { background-image: url("{{ url_for('static', filename='img/image.png') }}"); background-size: cover; background-position: center; background-attachment: fixed; }
+        .page-overlay { background: linear-gradient(135deg, rgba(248, 250, 252, 0.75) 0%, rgba(241, 245, 249, 0.70) 100%); }
+        .main-content { background: transparent !important; }
+        .card, .stat-card, .glass-card { background: rgba(255, 255, 255, 0.92) !important; backdrop-filter: blur(8px); }
+        aside { background: rgba(255, 255, 255, 0.92) !important; backdrop-filter: blur(8px); }
+        header { background: rgba(255, 255, 255, 0.92) !important; backdrop-filter: blur(8px); }
+        .table-business { background: rgba(255, 255, 255, 0.95) !important; }
+        .table-business th { background: rgba(248, 250, 252, 0.95) !important; }
+        .table-business tr:hover { background: rgba(240, 249, 255, 0.8) !important; }
+        .gradient-text { background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen page-bg">
+    <div class="page-overlay min-h-screen">
+    {% if 'username' in session %}
+        {% if session.get('role') == 'admin' %}
+        <div class="flex h-screen overflow-hidden">
+            <aside class="bg-white/95 backdrop-blur-md w-64 shadow-lg z-10 hidden md:block border-r border-slate-200">
+                <div class="h-16 flex items-center justify-center border-b border-slate-200 bg-gradient-to-r from-sky-500 to-cyan-500 p-4">
+                    <h1 class="text-xl font-bold text-white">信用评估管理系统</h1>
+                </div>
+                <div class="py-4">
+                    <a href="{{ url_for('admin_dashboard') }}" class="sidebar-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"><i class="fa fa-tachometer mr-3 w-5"></i><span>仪表盘</span></a>
+                    <a href="{{ url_for('admin_user_manage') }}" class="sidebar-item {% if request.endpoint == 'admin_user_manage' %}active{% endif %}"><i class="fa fa-users mr-3 w-5"></i><span>用户管理</span></a>
+                    <a href="{{ url_for('admin_content_review') }}" class="sidebar-item {% if request.endpoint == 'admin_content_review' %}active{% endif %}"><i class="fa fa-check-square-o mr-3 w-5"></i><span>内容审核</span></a>
+                    <a href="{{ url_for('admin_link_manage') }}" class="sidebar-item {% if request.endpoint == 'admin_link_manage' %}active{% endif %}"><i class="fa fa-link mr-3 w-5"></i><span>外链管理</span></a>
+                    <div class="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider mt-4">数据管理</div>
+                    <a href="{{ url_for('admin_enterprise_data') }}" class="sidebar-item {% if request.endpoint == 'admin_enterprise_data' %}active{% endif %}"><i class="fa fa-building mr-3 w-5"></i><span>企业数据</span></a>
+                    <a href="{{ url_for('admin_transaction_data') }}" class="sidebar-item {% if request.endpoint == 'admin_transaction_data' %}active{% endif %}"><i class="fa fa-exchange mr-3 w-5"></i><span>交易数据</span></a>
+                    <a href="{{ url_for('admin_loan_data') }}" class="sidebar-item {% if request.endpoint == 'admin_loan_data' %}active{% endif %}"><i class="fa fa-money mr-3 w-5"></i><span>贷款数据</span></a>
+                    <a href="{{ url_for('admin_repayment_data') }}" class="sidebar-item {% if request.endpoint == 'admin_repayment_data' %}active{% endif %}"><i class="fa fa-credit-card mr-3 w-5"></i><span>还款数据</span></a>
+                    <a href="{{ url_for('admin_assessment_data') }}" class="sidebar-item {% if request.endpoint == 'admin_assessment_data' %}active{% endif %}"><i class="fa fa-star mr-3 w-5"></i><span>评估数据</span></a>
+                    <a href="{{ url_for('admin_credit_history_data') }}" class="sidebar-item {% if request.endpoint == 'admin_credit_history_data' %}active{% endif %}"><i class="fa fa-history mr-3 w-5"></i><span>征信数据</span></a>
+                    <div class="border-t border-slate-200 mt-4 pt-4">
+                        <a href="{{ url_for('logout') }}" class="sidebar-item text-red-500 hover:text-red-600 hover:bg-red-50"><i class="fa fa-sign-out mr-3 w-5"></i><span>退出登录</span></a>
+                    </div>
+                </div>
+            </aside>
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <header class="bg-white text-slate-700 shadow-sm w-full border-b border-slate-200">
+                    <div class="flex justify-between items-center p-4">
+                        <button class="md:hidden text-slate-600" id="sidebar-toggle"><i class="fa fa-bars text-xl"></i></button>
+                        <div class="hidden md:block text-lg font-medium text-sky-600">{% block page_title %}{% endblock %}</div>
+                        <div class="ml-auto flex items-center space-x-4">
+                            <span class="text-slate-600 hidden md:inline"><i class="fa fa-user-circle mr-1"></i>{{ session['name'] }} <span class="text-sky-500">(管理员)</span></span>
+                            <a href="{{ url_for('logout') }}" class="text-slate-500 hover:text-red-500 transition-colors"><i class="fa fa-sign-out"></i></a>
+                        </div>
+                    </div>
+                </header>
+                <main class="flex-1 overflow-y-auto p-6 main-content">{% block content %}{% endblock %}</main>
+            </div>
+        </div>
+        {% elif session.get('role') == 'employee' %}
+        <div class="flex flex-col min-h-screen">
+            <header class="bg-white text-slate-700 shadow-sm w-full border-b border-slate-200 z-50">
+                <div class="container mx-auto px-4">
+                    <div class="flex justify-between items-center h-16">
+                        <a href="{{ url_for('employee_dashboard') }}" class="text-xl font-bold text-sky-500 flex items-center"><i class="fa fa-bank mr-2"></i>信用评估业务系统</a>
+                        <nav class="hidden md:flex space-x-1">
+                            <a href="{{ url_for('employee_dashboard') }}" class="nav-link {% if request.endpoint == 'employee_dashboard' %}active{% endif %}"><i class="fa fa-tachometer mr-1"></i> 仪表盘</a>
+                            <a href="{{ url_for('employee_enterprise_list') }}" class="nav-link {% if request.endpoint == 'employee_enterprise_list' %}active{% endif %}"><i class="fa fa-building mr-1"></i> 企业管理</a>
+                            <a href="{{ url_for('employee_credit_records') }}" class="nav-link {% if request.endpoint == 'employee_credit_records' %}active{% endif %}"><i class="fa fa-file-text mr-1"></i> 征信记录</a>
+                            <a href="{{ url_for('employee_assessment_results') }}" class="nav-link {% if request.endpoint == 'employee_assessment_results' %}active{% endif %}"><i class="fa fa-star mr-1"></i> 评估结果</a>
+                            <a href="{{ url_for('employee_loan_manage') }}" class="nav-link {% if request.endpoint == 'employee_loan_manage' %}active{% endif %}"><i class="fa fa-money mr-1"></i> 贷款管理</a>
+                            <a href="{{ url_for('employee_transaction_records') }}" class="nav-link {% if request.endpoint == 'employee_transaction_records' %}active{% endif %}"><i class="fa fa-exchange mr-1"></i> 交易记录</a>
+                            <a href="{{ url_for('employee_risk_warning') }}" class="nav-link {% if request.endpoint == 'employee_risk_warning' %}active{% endif %}"><i class="fa fa-exclamation-triangle mr-1"></i> 风险预警</a>
+                        </nav>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-slate-600 hidden lg:inline"><i class="fa fa-user-circle mr-1"></i>{{ session['name'] }} <span class="text-sky-500">(员工)</span></span>
+                            <a href="{{ url_for('logout') }}" class="text-slate-500 hover:text-red-500 transition-colors" title="退出登录"><i class="fa fa-sign-out"></i></a>
+                            <button class="md:hidden text-slate-600" id="mobile-menu-toggle"><i class="fa fa-bars text-xl"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main class="flex-1 p-6 main-content"><div class="container mx-auto">{% block employee_content %}{% endblock %}</div></main>
+        </div>
+        {% else %}
+        <div class="flex flex-col min-h-screen">
+            <header class="bg-white text-slate-700 shadow-sm w-full border-b border-slate-200 z-50">
+                <div class="container mx-auto px-4">
+                    <div class="flex justify-between items-center h-16">
+                        <a href="{{ url_for('enterprise_dashboard') }}" class="text-xl font-bold text-sky-500 flex items-center"><i class="fa fa-building mr-2"></i>企业信用评估系统</a>
+                        <nav class="hidden md:flex space-x-1">
+                            <a href="{{ url_for('enterprise_dashboard') }}" class="nav-link {% if request.endpoint == 'enterprise_dashboard' %}active{% endif %}"><i class="fa fa-tachometer mr-1"></i> 仪表盘</a>
+                            <a href="{{ url_for('enterprise_account') }}" class="nav-link {% if request.endpoint == 'enterprise_account' %}active{% endif %}"><i class="fa fa-credit-card mr-1"></i> 存取款</a>
+                            <a href="{{ url_for('enterprise_loan') }}" class="nav-link {% if request.endpoint == 'enterprise_loan' %}active{% endif %}"><i class="fa fa-money mr-1"></i> 贷款还款</a>
+                            <a href="{{ url_for('enterprise_company_info') }}" class="nav-link {% if request.endpoint == 'enterprise_company_info' %}active{% endif %}"><i class="fa fa-info-circle mr-1"></i> 企业信息</a>
+                            <a href="{{ url_for('enterprise_credit_query') }}" class="nav-link {% if request.endpoint == 'enterprise_credit_query' %}active{% endif %}"><i class="fa fa-search mr-1"></i> 征信查询</a>
+                            <a href="{{ url_for('enterprise_credit_visual') }}" class="nav-link {% if request.endpoint == 'enterprise_credit_visual' %}active{% endif %}"><i class="fa fa-line-chart mr-1"></i> 信用可视化</a>
+                            <a href="{{ url_for('enterprise_assessment') }}" class="nav-link {% if request.endpoint == 'enterprise_assessment' %}active{% endif %}"><i class="fa fa-file-text mr-1"></i> 信用评估</a>
+                            <a href="{{ url_for('enterprise_risk_warning') }}" class="nav-link {% if request.endpoint == 'enterprise_risk_warning' %}active{% endif %}"><i class="fa fa-exclamation-triangle mr-1"></i> 风险预警</a>
+                        </nav>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-slate-600 hidden lg:inline"><i class="fa fa-user-circle mr-1"></i>{{ session['name'] }} <span class="text-sky-500">(企业)</span></span>
+                            <a href="{{ url_for('logout') }}" class="text-slate-500 hover:text-red-500 transition-colors" title="退出登录"><i class="fa fa-sign-out"></i></a>
+                            <button class="md:hidden text-slate-600" id="mobile-menu-toggle"><i class="fa fa-bars text-xl"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main class="flex-1 p-6 main-content"><div class="container mx-auto">{% block enterprise_content %}{% endblock %}</div></main>
+        </div>
+        {% endif %}
+    {% else %}
+    <div class="flex justify-center items-center min-h-screen bg-gradient-to-br from-sky-50 to-cyan-50">{% block auth_content %}{% endblock %}</div>
+    {% endif %}
+    {% with messages = get_flashed_messages() %}{% if messages %}<script>{% for msg in messages %}layer.msg("{{ msg }}");{% endfor %}</script>{% endif %}{% endwith %}
+    {% block extra_js %}{% endblock %}
+    <script>$(document).ready(function(){ $('#sidebar-toggle').click(function(){ $('aside').toggleClass('hidden'); }); $('#mobile-menu-toggle').click(function(){ $('#mobile-menu').toggleClass('hidden'); }); });</script>
+</body>
+</html>

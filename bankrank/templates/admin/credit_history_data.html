@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}征信数据管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}征信数据管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">征信数据管理</h2>
+        <p class="text-slate-500 mt-1">管理企业征信历史记录</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加记录</button>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="enterprise_id" class="input-field flex-1">
+            <option value="">全部企业</option>
+            {% for e in enterprises %}<option value="{{ e.id }}" {% if selected_ent == e.id|string %}selected{% endif %}>{{ e.company_name }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_ent %}<a href="{{ url_for('admin_credit_history_data') }}" class="btn-secondary">清除</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr><th>ID</th><th>企业</th><th>记录类型</th><th>记录来源</th><th>记录内容</th><th>记录日期</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td>{{ r.company_name or '--' }}</td>
+                    <td>
+                        {% if r.record_type == 'inquiry' %}<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-700">查询</span>
+                        {% elif r.record_type == 'positive' %}<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">正面</span>
+                        {% else %}<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">负面</span>{% endif %}
+                    </td>
+                    <td>{{ r.record_source or '--' }}</td>
+                    <td class="max-w-xs truncate">{{ r.record_content or '--' }}</td>
+                    <td>{{ r.record_date.strftime('%Y-%m-%d') if r.record_date else '--' }}</td>
+                    <td>
+                        <button onclick="showEditModal({{ r|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除？')">
+                            <input type="hidden" name="action" value="delete"><input type="hidden" name="record_id" value="{{ r.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}<tr><td colspan="7" class="text-center text-slate-400 py-8">暂无数据</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[500px] shadow-2xl">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加记录</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="record_id" id="form-id">
+            <div class="space-y-4">
+                <div><label class="block text-slate-600 text-sm mb-2">企业</label><select name="enterprise_id" id="form-enterprise-id" class="input-field">{% for e in enterprises %}<option value="{{ e.id }}">{{ e.company_name }}</option>{% endfor %}</select></div>
+                <div><label class="block text-slate-600 text-sm mb-2">记录类型</label><select name="record_type" id="form-type" class="input-field"><option value="inquiry">查询</option><option value="positive">正面</option><option value="negative">负面</option></select></div>
+                <div><label class="block text-slate-600 text-sm mb-2">记录来源</label><input type="text" name="record_source" id="form-source" class="input-field"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">记录内容</label><textarea name="record_content" id="form-content" class="input-field" rows="3"></textarea></div>
+                <div><label class="block text-slate-600 text-sm mb-2">记录日期</label><input type="date" name="record_date" id="form-date" class="input-field"></div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加记录'); $('#form-action').val('add'); $('#form-id').val('');
+    $('#form-source,#form-content,#form-date').val(''); $('#form-type').val('inquiry');
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(r) {
+    $('#modal-title').text('编辑记录'); $('#form-action').val('edit'); $('#form-id').val(r.id);
+    $('#form-enterprise-id').val(r.enterprise_id); $('#form-type').val(r.record_type); $('#form-source').val(r.record_source);
+    $('#form-content').val(r.record_content); if(r.record_date) $('#form-date').val(r.record_date.split('T')[0]);
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() { $('#modal').removeClass('flex').addClass('hidden'); }
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}企业数据管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}企业数据管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">企业数据管理</h2>
+        <p class="text-slate-500 mt-1">管理企业基本信息数据</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加企业</button>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <input type="text" name="search" value="{{ search }}" class="input-field flex-1" placeholder="搜索企业名称或信用代码">
+        <button type="submit" class="btn-primary"><i class="fa fa-search mr-2"></i>搜索</button>
+        {% if search %}<a href="{{ url_for('admin_enterprise_data') }}" class="btn-secondary">清除</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>企业名称</th>
+                    <th>信用代码</th>
+                    <th>法人</th>
+                    <th>注册资本</th>
+                    <th>行业</th>
+                    <th>执照状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in enterprises %}
+                <tr>
+                    <td>{{ e.id }}</td>
+                    <td class="font-medium">{{ e.company_name or '--' }}</td>
+                    <td class="font-mono text-sm">{{ e.credit_code or '--' }}</td>
+                    <td>{{ e.legal_person or '--' }}</td>
+                    <td>{% if e.registered_capital %}¥{{ "%.2f"|format(e.registered_capital) }}万{% else %}--{% endif %}</td>
+                    <td>{{ e.industry or '--' }}</td>
+                    <td>
+                        {% if e.license_status == 1 %}<span class="text-emerald-600">通过</span>
+                        {% elif e.license_status == 2 %}<span class="text-red-600">拒绝</span>
+                        {% else %}<span class="text-amber-600">待审</span>{% endif %}
+                    </td>
+                    <td>
+                        <button onclick="showEditModal({{ e|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除？')">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="enterprise_id" value="{{ e.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-slate-400 py-8">暂无数据</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[600px] shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加企业</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="enterprise_id" id="form-id">
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-slate-600 text-sm mb-2">用户ID</label><input type="number" name="user_id" id="form-user-id" class="input-field"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">企业名称</label><input type="text" name="company_name" id="form-company-name" class="input-field"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">信用代码</label><input type="text" name="credit_code" id="form-credit-code" class="input-field" maxlength="18"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">法人</label><input type="text" name="legal_person" id="form-legal-person" class="input-field"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">注册资本(万)</label><input type="number" name="registered_capital" id="form-capital" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">行业</label><input type="text" name="industry" id="form-industry" class="input-field"></div>
+                <div class="col-span-2"><label class="block text-slate-600 text-sm mb-2">地址</label><input type="text" name="address" id="form-address" class="input-field"></div>
+                <div id="status-field" class="hidden"><label class="block text-slate-600 text-sm mb-2">执照状态</label><select name="license_status" id="form-license-status" class="input-field"><option value="0">待审核</option><option value="1">通过</option><option value="2">拒绝</option></select></div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加企业'); $('#form-action').val('add'); $('#form-id').val('');
+    $('#form-user-id,#form-company-name,#form-credit-code,#form-legal-person,#form-capital,#form-industry,#form-address').val('');
+    $('#status-field').addClass('hidden'); $('#modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(e) {
+    $('#modal-title').text('编辑企业'); $('#form-action').val('edit'); $('#form-id').val(e.id);
+    $('#form-user-id').val(e.user_id); $('#form-company-name').val(e.company_name); $('#form-credit-code').val(e.credit_code);
+    $('#form-legal-person').val(e.legal_person); $('#form-capital').val(e.registered_capital); $('#form-industry').val(e.industry);
+    $('#form-address').val(e.address); $('#form-license-status').val(e.license_status);
+    $('#status-field').removeClass('hidden'); $('#modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() { $('#modal').removeClass('flex').addClass('hidden'); }
+</script>
+{% endblock %}

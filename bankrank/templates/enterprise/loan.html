@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}贷款还款 - 银行对公信用评估业务系统{% endblock %}
+
+{% block enterprise_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">贷款还款管理</h2>
+    <p class="text-slate-500 mt-1">查看贷款状态和进行还款操作</p>
+</div>
+
+<!-- 申请贷款 -->
+<div class="card mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-file-text-o text-sky-500 mr-2"></i>申请新贷款</h3>
+    <form method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <input type="hidden" name="action" value="apply">
+        <div>
+            <label class="block text-slate-600 text-sm font-medium mb-2">贷款金额（元）</label>
+            <input type="number" name="loan_amount" step="1000" min="10000" class="input-field" placeholder="最低10000元" required>
+        </div>
+        <div>
+            <label class="block text-slate-600 text-sm font-medium mb-2">贷款期限（月）</label>
+            <select name="loan_term" class="input-field">
+                <option value="6">6个月</option>
+                <option value="12" selected>12个月</option>
+                <option value="24">24个月</option>
+                <option value="36">36个月</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-slate-600 text-sm font-medium mb-2">参考年利率</label>
+            <input type="text" value="4.35%" class="input-field bg-slate-50" readonly>
+        </div>
+        <div>
+            <button type="submit" class="btn-primary w-full"><i class="fa fa-paper-plane mr-2"></i>提交申请</button>
+        </div>
+    </form>
+</div>
+
+<!-- 贷款列表 -->
+<div class="card mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-list text-sky-500 mr-2"></i>我的贷款</h3>
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>贷款编号</th>
+                    <th>贷款金额</th>
+                    <th>年利率</th>
+                    <th>期限</th>
+                    <th>剩余本金</th>
+                    <th>状态</th>
+                    <th>申请时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in loans %}
+                <tr>
+                    <td class="font-mono text-sm">{{ loan.loan_no }}</td>
+                    <td>¥{{ "%.2f"|format(loan.loan_amount) }}</td>
+                    <td>{{ loan.interest_rate }}%</td>
+                    <td>{{ loan.loan_term }}个月</td>
+                    <td class="text-sky-600 font-medium">¥{{ "%.2f"|format(loan.remaining_amount) }}</td>
+                    <td>
+                        {% if loan.status == 'pending' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">待审批</span>
+                        {% elif loan.status == 'approved' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-700">已批准</span>
+                        {% elif loan.status == 'rejected' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">已拒绝</span>
+                        {% elif loan.status == 'repaying' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">还款中</span>
+                        {% elif loan.status == 'completed' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">已结清</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ loan.apply_time.strftime('%Y-%m-%d') if loan.apply_time else '--' }}</td>
+                    <td>
+                        {% if loan.status == 'repaying' and loan.remaining_amount > 0 %}
+                        <button onclick="showRepayModal({{ loan.id }}, {{ loan.remaining_amount }})" class="btn-primary text-sm py-1 px-3">
+                            <i class="fa fa-credit-card mr-1"></i>还款
+                        </button>
+                        {% else %}
+                        <span class="text-slate-400">--</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-slate-400 py-8">暂无贷款记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 还款记录 -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-history text-sky-500 mr-2"></i>还款记录</h3>
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>还款日期</th>
+                    <th>还款金额</th>
+                    <th>本金</th>
+                    <th>利息</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in repayments %}
+                <tr>
+                    <td>{{ r.repay_date.strftime('%Y-%m-%d') if r.repay_date else '--' }}</td>
+                    <td class="font-medium">¥{{ "%.2f"|format(r.repay_amount) }}</td>
+                    <td>¥{{ "%.2f"|format(r.principal) }}</td>
+                    <td>¥{{ "%.2f"|format(r.interest) }}</td>
+                    <td>
+                        {% if r.status == 'paid' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">已还款</span>
+                        {% elif r.status == 'pending' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">待还款</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">逾期</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-slate-400 py-8">暂无还款记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 还款弹窗 -->
+<div id="repay-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-96 shadow-2xl">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">还款操作</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="repay">
+            <input type="hidden" name="loan_id" id="repay-loan-id">
+            <div class="mb-4">
+                <label class="block text-slate-600 text-sm font-medium mb-2">还款金额</label>
+                <input type="number" name="repay_amount" id="repay-amount" step="0.01" min="1" class="input-field" required>
+                <p class="text-xs text-slate-400 mt-1">剩余本金: ¥<span id="remaining-display">0</span></p>
+            </div>
+            <div class="flex space-x-3">
+                <button type="button" onclick="hideRepayModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">确认还款</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showRepayModal(loanId, remaining) {
+    $('#repay-loan-id').val(loanId);
+    $('#repay-amount').attr('max', remaining).val(remaining);
+    $('#remaining-display').text(remaining.toFixed(2));
+    $('#repay-modal').removeClass('hidden').addClass('flex');
+}
+function hideRepayModal() {
+    $('#repay-modal').removeClass('flex').addClass('hidden');
+}
+</script>
+{% endblock %}

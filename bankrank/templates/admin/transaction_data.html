@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}交易数据管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}交易数据管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">交易数据管理</h2>
+        <p class="text-slate-500 mt-1">管理企业存取款交易记录</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加交易</button>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="enterprise_id" class="input-field flex-1">
+            <option value="">全部企业</option>
+            {% for e in enterprises %}<option value="{{ e.id }}" {% if selected_ent == e.id|string %}selected{% endif %}>{{ e.company_name }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_ent %}<a href="{{ url_for('admin_transaction_data') }}" class="btn-secondary">清除</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr><th>ID</th><th>企业</th><th>类型</th><th>金额</th><th>交易后余额</th><th>备注</th><th>时间</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td>{{ t.id }}</td>
+                    <td>{{ t.company_name or '--' }}</td>
+                    <td>{% if t.trans_type == 'deposit' %}<span class="text-emerald-600">存入</span>{% else %}<span class="text-red-600">支取</span>{% endif %}</td>
+                    <td class="{% if t.trans_type == 'deposit' %}text-emerald-600{% else %}text-red-600{% endif %}">¥{{ "%.2f"|format(t.amount) }}</td>
+                    <td>¥{{ "%.2f"|format(t.balance_after) }}</td>
+                    <td>{{ t.remark or '--' }}</td>
+                    <td>{{ t.create_time.strftime('%Y-%m-%d %H:%M') if t.create_time else '--' }}</td>
+                    <td>
+                        <button onclick="showEditModal({{ t|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除？')">
+                            <input type="hidden" name="action" value="delete"><input type="hidden" name="trans_id" value="{{ t.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}<tr><td colspan="8" class="text-center text-slate-400 py-8">暂无数据</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[500px] shadow-2xl">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加交易</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="trans_id" id="form-id">
+            <div class="space-y-4">
+                <div><label class="block text-slate-600 text-sm mb-2">账户ID</label><input type="number" name="account_id" id="form-account-id" class="input-field"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">企业ID</label><input type="number" name="enterprise_id" id="form-enterprise-id" class="input-field"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">交易类型</label><select name="trans_type" id="form-trans-type" class="input-field"><option value="deposit">存入</option><option value="withdraw">支取</option></select></div>
+                <div><label class="block text-slate-600 text-sm mb-2">金额</label><input type="number" name="amount" id="form-amount" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">交易后余额</label><input type="number" name="balance_after" id="form-balance" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">备注</label><input type="text" name="remark" id="form-remark" class="input-field"></div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加交易'); $('#form-action').val('add'); $('#form-id').val('');
+    $('#form-account-id,#form-enterprise-id,#form-amount,#form-balance,#form-remark').val(''); $('#form-trans-type').val('deposit');
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(t) {
+    $('#modal-title').text('编辑交易'); $('#form-action').val('edit'); $('#form-id').val(t.id);
+    $('#form-account-id').val(t.account_id); $('#form-enterprise-id').val(t.enterprise_id); $('#form-trans-type').val(t.trans_type);
+    $('#form-amount').val(t.amount); $('#form-balance').val(t.balance_after); $('#form-remark').val(t.remark);
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() { $('#modal').removeClass('flex').addClass('hidden'); }
+</script>
+{% endblock %}

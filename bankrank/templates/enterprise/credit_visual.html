@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block title %}信用可视化 - 银行对公信用评估业务系统{% endblock %}
+
+{% block enterprise_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">信用评估可视化</h2>
+    <p class="text-slate-500 mt-1">实时查看您的信用定位与风险结构</p>
+</div>
+
+{% if latest %}
+<!-- 信用概览卡片 -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="glass-card card-hover text-center">
+        <div class="text-4xl font-bold gradient-text">{{ latest.score }}</div>
+        <p class="text-sm text-slate-500 mt-1">信用评分</p>
+    </div>
+    <div class="glass-card card-hover text-center">
+        <div class="text-4xl font-bold {% if latest.grade == 'A' %}text-emerald-500{% elif latest.grade == 'B' %}text-sky-500{% elif latest.grade == 'C' %}text-amber-500{% else %}text-red-500{% endif %}">{{ latest.grade }}</div>
+        <p class="text-sm text-slate-500 mt-1">信用等级</p>
+    </div>
+    <div class="glass-card card-hover text-center">
+        <div class="text-4xl font-bold text-sky-500">{{ "%.1f"|format(avg_score) }}</div>
+        <p class="text-sm text-slate-500 mt-1">平均分</p>
+    </div>
+    <div class="glass-card card-hover text-center">
+        <div class="text-4xl font-bold {% if latest.score >= avg_score %}text-emerald-500{% else %}text-amber-500{% endif %}">
+            {% if latest.score >= avg_score %}↑{% else %}↓{% endif %}{{ "%.1f"|format((latest.score - avg_score)|abs) }}
+        </div>
+        <p class="text-sm text-slate-500 mt-1">与平均分差距</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 信用评分仪表盘 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-dashboard text-sky-500 mr-2"></i>信用评分仪表盘</h3>
+        <div id="gauge-chart" style="height: 320px;"></div>
+    </div>
+    
+    <!-- 风险结构雷达图 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-pie-chart text-sky-500 mr-2"></i>评分维度分析</h3>
+        <div id="radar-chart" style="height: 320px;"></div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 历史评分趋势 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-line-chart text-sky-500 mr-2"></i>评分历史趋势</h3>
+        <div id="line-chart" style="height: 300px;"></div>
+    </div>
+    
+    <!-- 客户群体分布 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-bar-chart text-sky-500 mr-2"></i>客户群体分布</h3>
+        <div id="bar-chart" style="height: 300px;"></div>
+    </div>
+</div>
+
+{% if risk_indicators %}
+<!-- 风险预警模块 -->
+<div class="card mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-exclamation-triangle text-amber-500 mr-2"></i>风险预警指标</h3>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="p-4 rounded-lg text-center {% if risk_indicators.overall_risk == 'low' %}bg-emerald-50 border border-emerald-200{% elif risk_indicators.overall_risk == 'medium' %}bg-amber-50 border border-amber-200{% else %}bg-red-50 border border-red-200{% endif %}">
+            <i class="fa fa-shield fa-2x mb-2 {% if risk_indicators.overall_risk == 'low' %}text-emerald-500{% elif risk_indicators.overall_risk == 'medium' %}text-amber-500{% else %}text-red-500{% endif %}"></i>
+            <p class="text-sm text-slate-600">综合风险</p>
+            <p class="font-bold {% if risk_indicators.overall_risk == 'low' %}text-emerald-600{% elif risk_indicators.overall_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+                {% if risk_indicators.overall_risk == 'low' %}低{% elif risk_indicators.overall_risk == 'medium' %}中{% else %}高{% endif %}
+            </p>
+        </div>
+        <div class="p-4 rounded-lg text-center {% if risk_indicators.financial_risk == 'low' %}bg-emerald-50 border border-emerald-200{% elif risk_indicators.financial_risk == 'medium' %}bg-amber-50 border border-amber-200{% else %}bg-red-50 border border-red-200{% endif %}">
+            <i class="fa fa-dollar fa-2x mb-2 {% if risk_indicators.financial_risk == 'low' %}text-emerald-500{% elif risk_indicators.financial_risk == 'medium' %}text-amber-500{% else %}text-red-500{% endif %}"></i>
+            <p class="text-sm text-slate-600">财务风险</p>
+            <p class="font-bold {% if risk_indicators.financial_risk == 'low' %}text-emerald-600{% elif risk_indicators.financial_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+                {% if risk_indicators.financial_risk == 'low' %}低{% elif risk_indicators.financial_risk == 'medium' %}中{% else %}高{% endif %}
+            </p>
+        </div>
+        <div class="p-4 rounded-lg text-center {% if risk_indicators.legal_risk == 'low' %}bg-emerald-50 border border-emerald-200{% elif risk_indicators.legal_risk == 'medium' %}bg-amber-50 border border-amber-200{% else %}bg-red-50 border border-red-200{% endif %}">
+            <i class="fa fa-gavel fa-2x mb-2 {% if risk_indicators.legal_risk == 'low' %}text-emerald-500{% elif risk_indicators.legal_risk == 'medium' %}text-amber-500{% else %}text-red-500{% endif %}"></i>
+            <p class="text-sm text-slate-600">法律风险</p>
+            <p class="font-bold {% if risk_indicators.legal_risk == 'low' %}text-emerald-600{% elif risk_indicators.legal_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+                {% if risk_indicators.legal_risk == 'low' %}低{% elif risk_indicators.legal_risk == 'medium' %}中{% else %}高{% endif %}
+            </p>
+        </div>
+        <div class="p-4 rounded-lg text-center {% if risk_indicators.operational_risk == 'low' %}bg-emerald-50 border border-emerald-200{% elif risk_indicators.operational_risk == 'medium' %}bg-amber-50 border border-amber-200{% else %}bg-red-50 border border-red-200{% endif %}">
+            <i class="fa fa-cogs fa-2x mb-2 {% if risk_indicators.operational_risk == 'low' %}text-emerald-500{% elif risk_indicators.operational_risk == 'medium' %}text-amber-500{% else %}text-red-500{% endif %}"></i>
+            <p class="text-sm text-slate-600">运营风险</p>
+            <p class="font-bold {% if risk_indicators.operational_risk == 'low' %}text-emerald-600{% elif risk_indicators.operational_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+                {% if risk_indicators.operational_risk == 'low' %}低{% elif risk_indicators.operational_risk == 'medium' %}中{% else %}高{% endif %}
+            </p>
+        </div>
+        <div class="p-4 rounded-lg text-center {% if risk_indicators.credit_risk == 'low' %}bg-emerald-50 border border-emerald-200{% elif risk_indicators.credit_risk == 'medium' %}bg-amber-50 border border-amber-200{% else %}bg-red-50 border border-red-200{% endif %}">
+            <i class="fa fa-credit-card fa-2x mb-2 {% if risk_indicators.credit_risk == 'low' %}text-emerald-500{% elif risk_indicators.credit_risk == 'medium' %}text-amber-500{% else %}text-red-500{% endif %}"></i>
+            <p class="text-sm text-slate-600">信用风险</p>
+            <p class="font-bold {% if risk_indicators.credit_risk == 'low' %}text-emerald-600{% elif risk_indicators.credit_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+                {% if risk_indicators.credit_risk == 'low' %}低{% elif risk_indicators.credit_risk == 'medium' %}中{% else %}高{% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 信用定位说明 -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-info-circle text-sky-500 mr-2"></i>信用定位分析</h3>
+    <div class="p-4 {% if latest.score >= 80 %}bg-emerald-50 border-l-4 border-emerald-500{% elif latest.score >= 60 %}bg-sky-50 border-l-4 border-sky-500{% elif latest.score >= 40 %}bg-amber-50 border-l-4 border-amber-500{% else %}bg-red-50 border-l-4 border-red-500{% endif %} rounded-r-lg">
+        <p class="font-medium {% if latest.score >= 80 %}text-emerald-700{% elif latest.score >= 60 %}text-sky-700{% elif latest.score >= 40 %}text-amber-700{% else %}text-red-700{% endif %}">
+            {% if latest.score >= 80 %}
+            <i class="fa fa-star mr-2"></i>优质客户 - A级信用
+            {% elif latest.score >= 60 %}
+            <i class="fa fa-thumbs-up mr-2"></i>良好客户 - B级信用
+            {% elif latest.score >= 40 %}
+            <i class="fa fa-exclamation-circle mr-2"></i>一般客户 - C级信用
+            {% else %}
+            <i class="fa fa-warning mr-2"></i>风险客户 - D级信用
+            {% endif %}
+        </p>
+        <p class="text-sm text-slate-600 mt-2">
+            {% if latest.score >= 80 %}
+            您的信用评分优秀，可享受最优惠的贷款利率和最高的授信额度。建议继续保持良好的经营状态。
+            {% elif latest.score >= 60 %}
+            您的信用评分良好，可获得较优惠的贷款条件。建议进一步优化财务结构以提升信用等级。
+            {% elif latest.score >= 40 %}
+            您的信用评分一般，贷款审批可能需要更多材料支持。建议改善财务状况和信用记录。
+            {% else %}
+            您的信用评分较低，建议尽快改善企业经营状况，降低负债率，处理涉诉问题。
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+{% else %}
+<div class="card text-center py-12">
+    <i class="fa fa-bar-chart text-6xl text-slate-300 mb-4"></i>
+    <h3 class="text-xl font-medium text-slate-600 mb-2">暂无评估数据</h3>
+    <p class="text-slate-400 mb-6">请先完成信用评估问卷</p>
+    <a href="{{ url_for('enterprise_assessment') }}" class="btn-primary inline-block">
+        <i class="fa fa-file-text mr-2"></i>开始评估
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if latest %}
+<script>
+$(document).ready(function(){
+    // 仪表盘图表
+    var gaugeChart = echarts.init(document.getElementById('gauge-chart'));
+    var gradeColor = '{{ "#10b981" if latest.grade == "A" else "#0ea5e9" if latest.grade == "B" else "#f59e0b" if latest.grade == "C" else "#ef4444" }}';
+    gaugeChart.setOption({
+        series: [{
+            type: 'gauge',
+            startAngle: 180,
+            endAngle: 0,
+            min: 0,
+            max: 100,
+            splitNumber: 10,
+            itemStyle: { color: gradeColor },
+            progress: { show: true, width: 25, roundCap: true },
+            pointer: { show: true, length: '60%', width: 6, itemStyle: { color: gradeColor } },
+            axisLine: { 
+                lineStyle: { 
+                    width: 25, 
+                    color: [[0.4, '#ef4444'], [0.6, '#f59e0b'], [0.8, '#0ea5e9'], [1, '#10b981']] 
+                } 
+            },
+            axisTick: { show: false },
+            splitLine: { show: false },
+            axisLabel: { show: true, distance: 35, color: '#64748b', fontSize: 12 },
+            title: { show: true, offsetCenter: [0, '75%'], fontSize: 14, color: '#64748b' },
+            detail: { 
+                valueAnimation: true, 
+                fontSize: 42, 
+                fontWeight: 'bold', 
+                formatter: '{value}', 
+                color: gradeColor, 
+                offsetCenter: [0, '20%'] 
+            },
+            data: [{ value: {{ latest.score }}, name: '信用评分' }]
+        }]
+    });
+
+    // 雷达图
+    var radarChart = echarts.init(document.getElementById('radar-chart'));
+    radarChart.setOption({
+        tooltip: {},
+        radar: {
+            indicator: [
+                { name: '行业评分', max: 7 },
+                { name: '负债评分', max: 7 },
+                { name: '现金流评分', max: 7 },
+                { name: '诉讼评分', max: 7 }
+            ],
+            shape: 'polygon',
+            splitNumber: 5,
+            axisName: { color: '#64748b', fontSize: 12 },
+            splitLine: { lineStyle: { color: '#e2e8f0' } },
+            splitArea: { areaStyle: { color: ['#f8fafc', '#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8'].map(c => c + '40') } },
+            axisLine: { lineStyle: { color: '#e2e8f0' } }
+        },
+        series: [{
+            type: 'radar',
+            data: [{
+                value: [{{ latest.industry_score or 0 }}, {{ latest.debt_score or 0 }}, {{ latest.cashflow_score or 0 }}, {{ latest.litigation_score or 0 }}],
+                name: '评分详情',
+                areaStyle: { color: 'rgba(14, 165, 233, 0.4)' },
+                lineStyle: { color: '#0ea5e9', width: 2 },
+                itemStyle: { color: '#0ea5e9' },
+                symbol: 'circle',
+                symbolSize: 8
+            }]
+        }]
+    });
+
+    // 折线图
+    var lineChart = echarts.init(document.getElementById('line-chart'));
+    var historyDates = [{% for h in history %}'{{ h.assess_time.strftime("%m-%d") if h.assess_time else "" }}'{% if not loop.last %},{% endif %}{% endfor %}];
+    var historyScores = [{% for h in history %}{{ h.score }}{% if not loop.last %},{% endif %}{% endfor %}];
+    lineChart.setOption({
+        tooltip: { trigger: 'axis', formatter: '{b}<br/>评分: {c}分' },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        xAxis: {
+            type: 'category',
+            data: historyDates,
+            axisLine: { lineStyle: { color: '#e2e8f0' } },
+            axisLabel: { color: '#64748b' },
+            boundaryGap: false
+        },
+        yAxis: {
+            type: 'value',
+            min: 0,
+            max: 100,
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#e2e8f0', type: 'dashed' } },
+            axisLabel: { color: '#64748b' }
+        },
+        series: [{
+            data: historyScores,
+            type: 'line',
+            smooth: true,
+            lineStyle: { color: '#0ea5e9', width: 3 },
+            itemStyle: { color: '#0ea5e9', borderWidth: 2 },
+            areaStyle: { 
+                color: { 
+                    type: 'linear', x: 0, y: 0, x2: 0, y2: 1, 
+                    colorStops: [{ offset: 0, color: 'rgba(14, 165, 233, 0.4)' }, { offset: 1, color: 'rgba(14, 165, 233, 0)' }] 
+                } 
+            },
+            markLine: {
+                silent: true,
+                data: [{ yAxis: 60, lineStyle: { color: '#f59e0b', type: 'dashed' } }],
+                label: { formatter: '及格线', color: '#f59e0b' }
+            },
+            symbol: 'circle',
+            symbolSize: 8
+        }]
+    });
+
+    // 柱状图 - 等级分布
+    var barChart = echarts.init(document.getElementById('bar-chart'));
+    var gradeData = { 'A': 0, 'B': 0, 'C': 0, 'D': 0 };
+    {% for g in grade_dist %}gradeData['{{ g.grade }}'] = {{ g.cnt }};{% endfor %}
+    barChart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        xAxis: {
+            type: 'category',
+            data: ['A级', 'B级', 'C级', 'D级'],
+            axisLine: { lineStyle: { color: '#e2e8f0' } },
+            axisLabel: { color: '#64748b' }
+        },
+        yAxis: {
+            type: 'value',
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#e2e8f0', type: 'dashed' } },
+            axisLabel: { color: '#64748b' }
+        },
+        series: [{
+            data: [
+                { value: gradeData['A'], itemStyle: { color: '#10b981', borderRadius: [4, 4, 0, 0] } },
+                { value: gradeData['B'], itemStyle: { color: '#0ea5e9', borderRadius: [4, 4, 0, 0] } },
+                { value: gradeData['C'], itemStyle: { color: '#f59e0b', borderRadius: [4, 4, 0, 0] } },
+                { value: gradeData['D'], itemStyle: { color: '#ef4444', borderRadius: [4, 4, 0, 0] } }
+            ],
+            type: 'bar',
+            barWidth: '50%',
+            label: { show: true, position: 'top', color: '#64748b' }
+        }]
+    });
+
+    $(window).resize(function(){
+        gaugeChart.resize();
+        radarChart.resize();
+        lineChart.resize();
+        barChart.resize();
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

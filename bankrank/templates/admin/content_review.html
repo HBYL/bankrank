@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}内容审核 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}内容审核{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">内容审核管理</h2>
+    <p class="text-slate-500 mt-1">审核企业上传的营业执照和信息截图</p>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="status" class="input-field w-48">
+            <option value="0" {% if selected_status == '0' %}selected{% endif %}>待审核</option>
+            <option value="1" {% if selected_status == '1' %}selected{% endif %}>已通过</option>
+            <option value="2" {% if selected_status == '2' %}selected{% endif %}>已拒绝</option>
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+    </form>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for r in reviews %}
+    <div class="card">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h4 class="font-medium text-slate-800">{{ r.company_name or '未知企业' }}</h4>
+                <p class="text-sm text-slate-400">{{ r.content_type == 'license' and '营业执照' or '信息截图' }}</p>
+            </div>
+            {% if r.status == 0 %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">待审核</span>
+            {% elif r.status == 1 %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">已通过</span>
+            {% else %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">已拒绝</span>
+            {% endif %}
+        </div>
+        
+        {% if r.content_path %}
+        <img src="{{ url_for('static', filename='uploads/' + r.content_path) }}" alt="审核内容" class="w-full h-48 object-cover rounded-lg border border-slate-200 mb-4">
+        {% else %}
+        <div class="w-full h-48 bg-slate-100 rounded-lg flex items-center justify-center mb-4">
+            <span class="text-slate-400">无图片</span>
+        </div>
+        {% endif %}
+        
+        <p class="text-xs text-slate-400 mb-4">提交时间: {{ r.create_time.strftime('%Y-%m-%d %H:%M') if r.create_time else '--' }}</p>
+        
+        {% if r.status == 0 %}
+        <form method="POST">
+            <input type="hidden" name="review_id" value="{{ r.id }}">
+            <div class="mb-3">
+                <input type="text" name="comment" class="input-field text-sm" placeholder="审核意见（可选）">
+            </div>
+            <div class="flex space-x-2">
+                <button type="submit" name="action" value="approve" class="btn-success flex-1 text-sm">
+                    <i class="fa fa-check mr-1"></i>通过
+                </button>
+                <button type="submit" name="action" value="reject" class="btn-danger flex-1 text-sm">
+                    <i class="fa fa-times mr-1"></i>拒绝
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-sm text-slate-500">
+            <i class="fa fa-comment-o mr-1"></i>
+            {{ r.review_comment or '无审核意见' }}
+        </p>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="col-span-full card text-center py-12">
+        <i class="fa fa-check-circle text-6xl text-slate-300 mb-4"></i>
+        <p class="text-slate-400">暂无{{ selected_status == '0' and '待审核' or selected_status == '1' and '已通过' or '已拒绝' }}内容</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

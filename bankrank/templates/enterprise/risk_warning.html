@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}风险预警 - 银行对公信用评估业务系统{% endblock %}
+
+{% block enterprise_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">风险预警中心</h2>
+    <p class="text-slate-500 mt-1">实时监控企业风险状态，预防潜在风险</p>
+</div>
+
+{% if risk_indicators %}
+<!-- 风险指标概览 -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="glass-card card-hover text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center {% if risk_indicators.overall_risk == 'low' %}bg-emerald-100 text-emerald-600{% elif risk_indicators.overall_risk == 'medium' %}bg-amber-100 text-amber-600{% else %}bg-red-100 text-red-600{% endif %}">
+            <i class="fa fa-shield fa-lg"></i>
+        </div>
+        <p class="text-sm text-slate-500">综合风险</p>
+        <p class="text-lg font-bold {% if risk_indicators.overall_risk == 'low' %}text-emerald-600{% elif risk_indicators.overall_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+            {% if risk_indicators.overall_risk == 'low' %}低风险{% elif risk_indicators.overall_risk == 'medium' %}中风险{% else %}高风险{% endif %}
+        </p>
+    </div>
+    <div class="glass-card card-hover text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center {% if risk_indicators.financial_risk == 'low' %}bg-emerald-100 text-emerald-600{% elif risk_indicators.financial_risk == 'medium' %}bg-amber-100 text-amber-600{% else %}bg-red-100 text-red-600{% endif %}">
+            <i class="fa fa-dollar fa-lg"></i>
+        </div>
+        <p class="text-sm text-slate-500">财务风险</p>
+        <p class="text-lg font-bold {% if risk_indicators.financial_risk == 'low' %}text-emerald-600{% elif risk_indicators.financial_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+            {% if risk_indicators.financial_risk == 'low' %}低{% elif risk_indicators.financial_risk == 'medium' %}中{% else %}高{% endif %}
+        </p>
+    </div>
+    <div class="glass-card card-hover text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center {% if risk_indicators.legal_risk == 'low' %}bg-emerald-100 text-emerald-600{% elif risk_indicators.legal_risk == 'medium' %}bg-amber-100 text-amber-600{% else %}bg-red-100 text-red-600{% endif %}">
+            <i class="fa fa-gavel fa-lg"></i>
+        </div>
+        <p class="text-sm text-slate-500">法律风险</p>
+        <p class="text-lg font-bold {% if risk_indicators.legal_risk == 'low' %}text-emerald-600{% elif risk_indicators.legal_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+            {% if risk_indicators.legal_risk == 'low' %}低{% elif risk_indicators.legal_risk == 'medium' %}中{% else %}高{% endif %}
+        </p>
+    </div>
+    <div class="glass-card card-hover text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center {% if risk_indicators.operational_risk == 'low' %}bg-emerald-100 text-emerald-600{% elif risk_indicators.operational_risk == 'medium' %}bg-amber-100 text-amber-600{% else %}bg-red-100 text-red-600{% endif %}">
+            <i class="fa fa-cogs fa-lg"></i>
+        </div>
+        <p class="text-sm text-slate-500">运营风险</p>
+        <p class="text-lg font-bold {% if risk_indicators.operational_risk == 'low' %}text-emerald-600{% elif risk_indicators.operational_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+            {% if risk_indicators.operational_risk == 'low' %}低{% elif risk_indicators.operational_risk == 'medium' %}中{% else %}高{% endif %}
+        </p>
+    </div>
+    <div class="glass-card card-hover text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center {% if risk_indicators.credit_risk == 'low' %}bg-emerald-100 text-emerald-600{% elif risk_indicators.credit_risk == 'medium' %}bg-amber-100 text-amber-600{% else %}bg-red-100 text-red-600{% endif %}">
+            <i class="fa fa-credit-card fa-lg"></i>
+        </div>
+        <p class="text-sm text-slate-500">信用风险</p>
+        <p class="text-lg font-bold {% if risk_indicators.credit_risk == 'low' %}text-emerald-600{% elif risk_indicators.credit_risk == 'medium' %}text-amber-600{% else %}text-red-600{% endif %}">
+            {% if risk_indicators.credit_risk == 'low' %}低{% elif risk_indicators.credit_risk == 'medium' %}中{% else %}高{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 风险雷达图 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-compass text-sky-500 mr-2"></i>风险雷达分析</h3>
+        <div id="risk-radar-chart" style="height: 350px;"></div>
+    </div>
+    
+    <!-- 风险仪表盘 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-dashboard text-sky-500 mr-2"></i>综合风险指数</h3>
+        <div id="risk-gauge-chart" style="height: 350px;"></div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 信用评分趋势 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-line-chart text-sky-500 mr-2"></i>信用评分趋势</h3>
+        <div id="score-trend-chart" style="height: 300px;"></div>
+    </div>
+    
+    <!-- 现金流波动 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-area-chart text-sky-500 mr-2"></i>现金流波动分析</h3>
+        <div id="cashflow-chart" style="height: 300px;"></div>
+    </div>
+</div>
+
+<!-- 贷款风险分析 -->
+<div class="card mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-money text-sky-500 mr-2"></i>贷款风险分析</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 bg-slate-50 rounded-lg text-center">
+            <p class="text-3xl font-bold text-sky-600">{{ loan_risk.total or 0 }}</p>
+            <p class="text-sm text-slate-500 mt-1">贷款笔数</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-lg text-center">
+            <p class="text-3xl font-bold text-amber-600">¥{{ "%.2f"|format(loan_risk.debt or 0) }}</p>
+            <p class="text-sm text-slate-500 mt-1">待还金额</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-lg text-center">
+            <p class="text-3xl font-bold {% if (loan_risk.debt or 0) > 100000 %}text-red-600{% else %}text-emerald-600{% endif %}">
+                {% if (loan_risk.debt or 0) > 100000 %}较高{% elif (loan_risk.debt or 0) > 50000 %}中等{% else %}较低{% endif %}
+            </p>
+            <p class="text-sm text-slate-500 mt-1">负债风险等级</p>
+        </div>
+    </div>
+</div>
+
+<!-- 风险预警建议 -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-lightbulb-o text-sky-500 mr-2"></i>风险预警建议</h3>
+    <div class="space-y-3">
+        {% if risk_indicators.overall_risk == 'high' %}
+        <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+            <p class="font-medium text-red-700"><i class="fa fa-exclamation-circle mr-2"></i>高风险警告</p>
+            <p class="text-sm text-red-600 mt-1">您的综合风险等级较高，建议立即采取措施改善财务状况，降低负债率，并确保按时还款。</p>
+        </div>
+        {% endif %}
+        {% if risk_indicators.financial_risk == 'high' %}
+        <div class="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">
+            <p class="font-medium text-amber-700"><i class="fa fa-warning mr-2"></i>财务风险提示</p>
+            <p class="text-sm text-amber-600 mt-1">财务指标显示存在风险，建议优化资产负债结构，提高现金流稳定性。</p>
+        </div>
+        {% endif %}
+        {% if risk_indicators.legal_risk == 'high' %}
+        <div class="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">
+            <p class="font-medium text-amber-700"><i class="fa fa-gavel mr-2"></i>法律风险提示</p>
+            <p class="text-sm text-amber-600 mt-1">存在较多涉诉记录，建议加强合规管理，及时处理法律纠纷。</p>
+        </div>
+        {% endif %}
+        {% if risk_indicators.overall_risk == 'low' and risk_indicators.financial_risk == 'low' %}
+        <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg">
+            <p class="font-medium text-emerald-700"><i class="fa fa-check-circle mr-2"></i>风险状态良好</p>
+            <p class="text-sm text-emerald-600 mt-1">您的各项风险指标均处于健康水平，请继续保持良好的经营状态。</p>
+        </div>
+        {% endif %}
+        {% if risk_indicators.overall_risk == 'medium' %}
+        <div class="p-4 bg-sky-50 border-l-4 border-sky-500 rounded-r-lg">
+            <p class="font-medium text-sky-700"><i class="fa fa-info-circle mr-2"></i>风险提示</p>
+            <p class="text-sm text-sky-600 mt-1">您的综合风险等级为中等，建议关注各项指标变化，适时调整经营策略。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+<div class="card text-center py-12">
+    <i class="fa fa-exclamation-triangle text-6xl text-slate-300 mb-4"></i>
+    <h3 class="text-xl font-medium text-slate-600 mb-2">暂无风险数据</h3>
+    <p class="text-slate-400 mb-6">请先完成信用评估问卷以获取风险分析</p>
+    <a href="{{ url_for('enterprise_assessment') }}" class="btn-primary inline-block">
+        <i class="fa fa-file-text mr-2"></i>开始评估
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if risk_indicators %}
+<script>
+$(document).ready(function(){
+    // 风险值映射
+    var riskValues = { 'low': 30, 'medium': 60, 'high': 90 };
+    
+    // 风险雷达图
+    var riskRadar = echarts.init(document.getElementById('risk-radar-chart'));
+    riskRadar.setOption({
+        radar: {
+            indicator: [
+                { name: '综合风险', max: 100 },
+                { name: '财务风险', max: 100 },
+                { name: '法律风险', max: 100 },
+                { name: '运营风险', max: 100 },
+                { name: '信用风险', max: 100 }
+            ],
+            shape: 'polygon',
+            splitNumber: 5,
+            axisName: { color: '#64748b', fontSize: 12 },
+            splitLine: { lineStyle: { color: '#e2e8f0' } },
+            splitArea: { areaStyle: { color: ['#f8fafc', '#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8'] } }
+        },
+        series: [{
+            type: 'radar',
+            data: [{
+                value: [
+                    riskValues['{{ risk_indicators.overall_risk }}'] || 50,
+                    riskValues['{{ risk_indicators.financial_risk }}'] || 50,
+                    riskValues['{{ risk_indicators.legal_risk }}'] || 50,
+                    riskValues['{{ risk_indicators.operational_risk }}'] || 50,
+                    riskValues['{{ risk_indicators.credit_risk }}'] || 50
+                ],
+                name: '风险指数',
+                areaStyle: { color: 'rgba(239, 68, 68, 0.3)' },
+                lineStyle: { color: '#ef4444', width: 2 },
+                itemStyle: { color: '#ef4444' }
+            }]
+        }]
+    });
+
+    // 风险仪表盘
+    var riskGauge = echarts.init(document.getElementById('risk-gauge-chart'));
+    var overallRiskValue = riskValues['{{ risk_indicators.overall_risk }}'] || 50;
+    riskGauge.setOption({
+        series: [{
+            type: 'gauge',
+            startAngle: 180,
+            endAngle: 0,
+            min: 0,
+            max: 100,
+            splitNumber: 10,
+            itemStyle: {
+                color: overallRiskValue <= 40 ? '#10b981' : (overallRiskValue <= 70 ? '#f59e0b' : '#ef4444')
+            },
+            progress: { show: true, width: 25 },
+            pointer: { show: true, length: '60%', width: 6 },
+            axisLine: {
+                lineStyle: {
+                    width: 25,
+                    color: [[0.4, '#10b981'], [0.7, '#f59e0b'], [1, '#ef4444']]
+                }
+            },
+            axisTick: { show: false },
+            splitLine: { show: false },
+            axisLabel: { show: false },
+            title: { show: true, offsetCenter: [0, '70%'], fontSize: 14, color: '#64748b' },
+            detail: {
+                valueAnimation: true,
+                fontSize: 32,
+                fontWeight: 'bold',
+                formatter: function(value) {
+                    if (value <= 40) return '低风险';
+                    if (value <= 70) return '中风险';
+                    return '高风险';
+                },
+                color: overallRiskValue <= 40 ? '#10b981' : (overallRiskValue <= 70 ? '#f59e0b' : '#ef4444'),
+                offsetCenter: [0, '30%']
+            },
+            data: [{ value: overallRiskValue, name: '综合风险指数' }]
+        }]
+    });
+
+    // 信用评分趋势 - 数据来自数据库history变量
+    var scoreTrend = echarts.init(document.getElementById('score-trend-chart'));
+    var historyDates = [];
+    var historyScores = [];
+    {% for h in history %}
+    historyDates.push('{{ h.assess_time.strftime("%m-%d") if h.assess_time else "" }}');
+    historyScores.push({{ h.score }});
+    {% endfor %}
+    
+    scoreTrend.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: {
+            type: 'category',
+            data: historyDates,
+            axisLine: { lineStyle: { color: '#e2e8f0' } },
+            axisLabel: { color: '#64748b' }
+        },
+        yAxis: {
+            type: 'value',
+            min: 0,
+            max: 100,
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#e2e8f0' } },
+            axisLabel: { color: '#64748b' }
+        },
+        series: [{
+            data: historyScores,
+            type: 'line',
+            smooth: true,
+            lineStyle: { color: '#0ea5e9', width: 3 },
+            itemStyle: { color: '#0ea5e9' },
+            areaStyle: {
+                color: {
+                    type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                    colorStops: [{ offset: 0, color: 'rgba(14, 165, 233, 0.4)' }, { offset: 1, color: 'rgba(14, 165, 233, 0)' }]
+                }
+            },
+            markLine: {
+                data: [
+                    { yAxis: 60, lineStyle: { color: '#f59e0b', type: 'dashed' }, label: { formatter: '警戒线' } }
+                ]
+            }
+        }]
+    });
+
+    // 现金流波动图 - 数据来自数据库cash_flow变量
+    var cashflowChart = echarts.init(document.getElementById('cashflow-chart'));
+    var cashflowDates = [];
+    var cashflowValues = [];
+    {% for c in cash_flow %}
+    cashflowDates.push('{{ c.date.strftime("%m-%d") if c.date else "" }}');
+    cashflowValues.push({{ c.net_flow or 0 }});
+    {% endfor %}
+    
+    cashflowChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: {
+            type: 'category',
+            data: cashflowDates,
+            axisLine: { lineStyle: { color: '#e2e8f0' } },
+            axisLabel: { color: '#64748b', rotate: 45 }
+        },
+        yAxis: {
+            type: 'value',
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#e2e8f0' } },
+            axisLabel: { color: '#64748b' }
+        },
+        series: [{
+            data: cashflowValues,
+            type: 'bar',
+            itemStyle: {
+                color: function(params) {
+                    return params.value >= 0 ? '#10b981' : '#ef4444';
+                }
+            }
+        }]
+    });
+
+    $(window).resize(function(){
+        riskRadar.resize();
+        riskGauge.resize();
+        scoreTrend.resize();
+        cashflowChart.resize();
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

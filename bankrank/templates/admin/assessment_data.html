@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}评估数据管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}评估数据管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">评估数据管理</h2>
+        <p class="text-slate-500 mt-1">管理企业信用评估记录</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加评估</button>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="grade" class="input-field w-48">
+            <option value="">全部等级</option>
+            <option value="A" {% if selected_grade == 'A' %}selected{% endif %}>A级</option>
+            <option value="B" {% if selected_grade == 'B' %}selected{% endif %}>B级</option>
+            <option value="C" {% if selected_grade == 'C' %}selected{% endif %}>C级</option>
+            <option value="D" {% if selected_grade == 'D' %}selected{% endif %}>D级</option>
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_grade %}<a href="{{ url_for('admin_assessment_data') }}" class="btn-secondary">清除</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr><th>ID</th><th>企业</th><th>评分</th><th>等级</th><th>行业分</th><th>负债分</th><th>现金流分</th><th>诉讼分</th><th>评估时间</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+                {% for a in assessments %}
+                <tr>
+                    <td>{{ a.id }}</td>
+                    <td>{{ a.company_name or '--' }}</td>
+                    <td class="font-bold text-sky-600">{{ a.score }}</td>
+                    <td><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-bold {% if a.grade == 'A' %}bg-emerald-500{% elif a.grade == 'B' %}bg-sky-500{% elif a.grade == 'C' %}bg-amber-500{% else %}bg-red-500{% endif %}">{{ a.grade }}</span></td>
+                    <td>{{ a.industry_score }}</td>
+                    <td>{{ a.debt_score }}</td>
+                    <td>{{ a.cashflow_score }}</td>
+                    <td>{{ a.litigation_score }}</td>
+                    <td>{{ a.assess_time.strftime('%Y-%m-%d %H:%M') if a.assess_time else '--' }}</td>
+                    <td>
+                        <button onclick="showEditModal({{ a|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除？')">
+                            <input type="hidden" name="action" value="delete"><input type="hidden" name="assess_id" value="{{ a.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}<tr><td colspan="10" class="text-center text-slate-400 py-8">暂无数据</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[500px] shadow-2xl">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加评估</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="assess_id" id="form-id">
+            <div class="space-y-4">
+                <div><label class="block text-slate-600 text-sm mb-2">企业</label><select name="enterprise_id" id="form-enterprise-id" class="input-field">{% for e in enterprises %}<option value="{{ e.id }}">{{ e.company_name }}</option>{% endfor %}</select></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-slate-600 text-sm mb-2">总评分</label><input type="number" name="score" id="form-score" class="input-field" min="0" max="100"></div>
+                    <div><label class="block text-slate-600 text-sm mb-2">等级</label><select name="grade" id="form-grade" class="input-field"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-slate-600 text-sm mb-2">行业分</label><input type="number" name="industry_score" id="form-industry" class="input-field" min="0" max="25"></div>
+                    <div><label class="block text-slate-600 text-sm mb-2">负债分</label><input type="number" name="debt_score" id="form-debt" class="input-field" min="0" max="25"></div>
+                    <div><label class="block text-slate-600 text-sm mb-2">现金流分</label><input type="number" name="cashflow_score" id="form-cashflow" class="input-field" min="0" max="25"></div>
+                    <div><label class="block text-slate-600 text-sm mb-2">诉讼分</label><input type="number" name="litigation_score" id="form-litigation" class="input-field" min="0" max="25"></div>
+                </div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加评估'); $('#form-action').val('add'); $('#form-id').val('');
+    $('#form-score,#form-industry,#form-debt,#form-cashflow,#form-litigation').val(''); $('#form-grade').val('B');
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(a) {
+    $('#modal-title').text('编辑评估'); $('#form-action').val('edit'); $('#form-id').val(a.id);
+    $('#form-enterprise-id').val(a.enterprise_id); $('#form-score').val(a.score); $('#form-grade').val(a.grade);
+    $('#form-industry').val(a.industry_score); $('#form-debt').val(a.debt_score); $('#form-cashflow').val(a.cashflow_score); $('#form-litigation').val(a.litigation_score);
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() { $('#modal').removeClass('flex').addClass('hidden'); }
+</script>
+{% endblock %}

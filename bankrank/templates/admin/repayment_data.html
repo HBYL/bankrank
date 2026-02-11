@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}还款数据管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}还款数据管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">还款数据管理</h2>
+        <p class="text-slate-500 mt-1">管理企业还款记录</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加还款</button>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="loan_id" class="input-field flex-1">
+            <option value="">全部贷款</option>
+            {% for l in loans %}<option value="{{ l.id }}" {% if selected_loan == l.id|string %}selected{% endif %}>{{ l.loan_no }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_loan %}<a href="{{ url_for('admin_repayment_data') }}" class="btn-secondary">清除</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr><th>ID</th><th>贷款编号</th><th>企业</th><th>还款金额</th><th>本金</th><th>利息</th><th>还款日期</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+                {% for r in repayments %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td class="font-mono text-sm">{{ r.loan_no or '--' }}</td>
+                    <td>{{ r.company_name or '--' }}</td>
+                    <td>¥{{ "%.2f"|format(r.repay_amount) }}</td>
+                    <td>¥{{ "%.2f"|format(r.principal) }}</td>
+                    <td>¥{{ "%.2f"|format(r.interest) }}</td>
+                    <td>{{ r.repay_date.strftime('%Y-%m-%d') if r.repay_date else '--' }}</td>
+                    <td>
+                        {% if r.status == 'paid' %}<span class="text-emerald-600">已还款</span>
+                        {% elif r.status == 'pending' %}<span class="text-amber-600">待还款</span>
+                        {% else %}<span class="text-red-600">逾期</span>{% endif %}
+                    </td>
+                    <td>
+                        <button onclick="showEditModal({{ r|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除？')">
+                            <input type="hidden" name="action" value="delete"><input type="hidden" name="repay_id" value="{{ r.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}<tr><td colspan="9" class="text-center text-slate-400 py-8">暂无数据</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[500px] shadow-2xl">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加还款</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="repay_id" id="form-id">
+            <div class="space-y-4">
+                <div><label class="block text-slate-600 text-sm mb-2">贷款</label><select name="loan_id" id="form-loan-id" class="input-field">{% for l in loans %}<option value="{{ l.id }}">{{ l.loan_no }}</option>{% endfor %}</select></div>
+                <div><label class="block text-slate-600 text-sm mb-2">企业</label><select name="enterprise_id" id="form-enterprise-id" class="input-field">{% for e in enterprises %}<option value="{{ e.id }}">{{ e.company_name }}</option>{% endfor %}</select></div>
+                <div><label class="block text-slate-600 text-sm mb-2">还款金额</label><input type="number" name="repay_amount" id="form-amount" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">本金</label><input type="number" name="principal" id="form-principal" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">利息</label><input type="number" name="interest" id="form-interest" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">还款日期</label><input type="date" name="repay_date" id="form-date" class="input-field"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">状态</label><select name="status" id="form-status" class="input-field"><option value="pending">待还款</option><option value="paid">已还款</option><option value="overdue">逾期</option></select></div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加还款'); $('#form-action').val('add'); $('#form-id').val('');
+    $('#form-amount,#form-principal,#form-interest,#form-date').val(''); $('#form-status').val('pending');
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(r) {
+    $('#modal-title').text('编辑还款'); $('#form-action').val('edit'); $('#form-id').val(r.id);
+    $('#form-loan-id').val(r.loan_id); $('#form-enterprise-id').val(r.enterprise_id); $('#form-amount').val(r.repay_amount);
+    $('#form-principal').val(r.principal); $('#form-interest').val(r.interest); $('#form-status').val(r.status);
+    if(r.repay_date) $('#form-date').val(r.repay_date.split('T')[0]);
+    $('#modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() { $('#modal').removeClass('flex').addClass('hidden'); }
+</script>
+{% endblock %}

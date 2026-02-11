@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}企业仪表盘 - 银行对公信用评估业务系统{% endblock %}
+
+{% block enterprise_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">欢迎回来，{{ session['name'] }}</h2>
+    <p class="text-slate-500 mt-1">这是您的企业信用评估概览</p>
+</div>
+
+<!-- 统计卡片 -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">账户余额</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">¥{{ "%.2f"|format(balance) }}</p>
+            </div>
+            <div class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-credit-card text-sky-500 text-xl"></i>
+            </div>
+        </div>
+        <a href="{{ url_for('enterprise_account') }}" class="text-sky-500 text-sm mt-3 inline-block hover:underline">查看详情 →</a>
+    </div>
+    
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">进行中贷款</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ loan_count }} 笔</p>
+            </div>
+            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-money text-emerald-500 text-xl"></i>
+            </div>
+        </div>
+        <p class="text-slate-400 text-sm mt-3">待还金额: ¥{{ "%.2f"|format(loan_total or 0) }}</p>
+    </div>
+    
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">信用评分</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ credit.score if credit else '--' }} 分</p>
+            </div>
+            <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-star text-amber-500 text-xl"></i>
+            </div>
+        </div>
+        <a href="{{ url_for('enterprise_credit_visual') }}" class="text-sky-500 text-sm mt-3 inline-block hover:underline">查看详情 →</a>
+    </div>
+    
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">信用等级</p>
+                <p class="text-2xl font-bold mt-1 {% if credit and credit.grade == 'A' %}text-emerald-500{% elif credit and credit.grade == 'B' %}text-sky-500{% elif credit and credit.grade == 'C' %}text-amber-500{% else %}text-red-500{% endif %}">
+                    {{ credit.grade if credit else '--' }} 级
+                </p>
+            </div>
+            <div class="w-12 h-12 {% if credit and credit.grade == 'A' %}bg-emerald-100{% elif credit and credit.grade == 'B' %}bg-sky-100{% elif credit and credit.grade == 'C' %}bg-amber-100{% else %}bg-red-100{% endif %} rounded-full flex items-center justify-center">
+                <i class="fa fa-trophy {% if credit and credit.grade == 'A' %}text-emerald-500{% elif credit and credit.grade == 'B' %}text-sky-500{% elif credit and credit.grade == 'C' %}text-amber-500{% else %}text-red-500{% endif %} text-xl"></i>
+            </div>
+        </div>
+        <a href="{{ url_for('enterprise_assessment') }}" class="text-sky-500 text-sm mt-3 inline-block hover:underline">重新评估 →</a>
+    </div>
+</div>
+
+<!-- 快捷操作 -->
+<div class="card mb-8">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">快捷操作</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <a href="{{ url_for('enterprise_account') }}" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+            <i class="fa fa-plus-circle text-sky-500 text-2xl mb-2"></i>
+            <span class="text-slate-600 text-sm">存款</span>
+        </a>
+        <a href="{{ url_for('enterprise_account') }}" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+            <i class="fa fa-minus-circle text-sky-500 text-2xl mb-2"></i>
+            <span class="text-slate-600 text-sm">取款</span>
+        </a>
+        <a href="{{ url_for('enterprise_loan') }}" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+            <i class="fa fa-file-text-o text-sky-500 text-2xl mb-2"></i>
+            <span class="text-slate-600 text-sm">申请贷款</span>
+        </a>
+        <a href="{{ url_for('enterprise_loan') }}" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+            <i class="fa fa-check-circle text-sky-500 text-2xl mb-2"></i>
+            <span class="text-slate-600 text-sm">还款</span>
+        </a>
+        <a href="{{ url_for('enterprise_assessment') }}" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+            <i class="fa fa-bar-chart text-sky-500 text-2xl mb-2"></i>
+            <span class="text-slate-600 text-sm">信用评估</span>
+        </a>
+        <a href="{{ url_for('enterprise_credit_query') }}" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+            <i class="fa fa-search text-sky-500 text-2xl mb-2"></i>
+            <span class="text-slate-600 text-sm">征信查询</span>
+        </a>
+    </div>
+</div>
+
+<!-- 信用等级说明 -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">信用等级说明</h3>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+            <div class="flex items-center mb-2">
+                <span class="text-2xl font-bold text-emerald-500">A级</span>
+                <span class="ml-2 text-sm text-emerald-600">80-100分</span>
+            </div>
+            <p class="text-sm text-slate-600">信用优秀，可享受最优贷款利率</p>
+        </div>
+        <div class="p-4 bg-sky-50 rounded-lg border border-sky-200">
+            <div class="flex items-center mb-2">
+                <span class="text-2xl font-bold text-sky-500">B级</span>
+                <span class="ml-2 text-sm text-sky-600">60-79分</span>
+            </div>
+            <p class="text-sm text-slate-600">信用良好，可正常申请贷款</p>
+        </div>
+        <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div class="flex items-center mb-2">
+                <span class="text-2xl font-bold text-amber-500">C级</span>
+                <span class="ml-2 text-sm text-amber-600">40-59分</span>
+            </div>
+            <p class="text-sm text-slate-600">信用一般，贷款需额外审核</p>
+        </div>
+        <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+            <div class="flex items-center mb-2">
+                <span class="text-2xl font-bold text-red-500">D级</span>
+                <span class="ml-2 text-sm text-red-600">0-39分</span>
+            </div>
+            <p class="text-sm text-slate-600">信用较差，建议改善后再申请</p>
+        </div>
+    </div>
+</div>
+
+<!-- AI咨询浮窗 -->
+<div id="ai-chat-btn" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-sky-500 to-cyan-500 rounded-full shadow-lg cursor-pointer flex items-center justify-center hover:scale-110 transition-transform z-50">
+    <i class="fa fa-comments text-white text-xl"></i>
+</div>
+
+<div id="ai-chat-window" class="fixed bottom-24 right-6 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 hidden z-50">
+    <div class="bg-gradient-to-r from-sky-500 to-cyan-500 text-white p-4 rounded-t-xl flex justify-between items-center">
+        <span class="font-medium"><i class="fa fa-robot mr-2"></i>AI智能咨询</span>
+        <button id="ai-chat-close" class="text-white hover:text-slate-200"><i class="fa fa-times"></i></button>
+    </div>
+    <div id="ai-chat-messages" class="h-64 overflow-y-auto p-4 space-y-3">
+        <div class="bg-sky-50 p-3 rounded-lg text-sm text-slate-600">
+            您好！我是AI助手，可以回答关于信用评估、贷款、企业信息等业务问题。请问有什么可以帮您？
+        </div>
+    </div>
+    <div class="p-4 border-t border-slate-200">
+        <div class="flex space-x-2">
+            <input type="text" id="ai-chat-input" class="input-field flex-1" placeholder="请输入您的问题...">
+            <button id="ai-chat-send" class="btn-primary px-4"><i class="fa fa-paper-plane"></i></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function(){
+    $('#ai-chat-btn').click(function(){
+        $('#ai-chat-window').toggleClass('hidden');
+    });
+    $('#ai-chat-close').click(function(){
+        $('#ai-chat-window').addClass('hidden');
+    });
+    $('#ai-chat-send').click(sendMessage);
+    $('#ai-chat-input').keypress(function(e){
+        if(e.which == 13) sendMessage();
+    });
+    
+    function sendMessage(){
+        var msg = $('#ai-chat-input').val().trim();
+        if(!msg) return;
+        $('#ai-chat-messages').append('<div class="bg-slate-100 p-3 rounded-lg text-sm text-slate-700 ml-8">'+msg+'</div>');
+        $('#ai-chat-input').val('');
+        $.ajax({
+            url: '/api/ai_consult',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({question: msg}),
+            success: function(res){
+                $('#ai-chat-messages').append('<div class="bg-sky-50 p-3 rounded-lg text-sm text-slate-600">'+res.answer+'</div>');
+                $('#ai-chat-messages').scrollTop($('#ai-chat-messages')[0].scrollHeight);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

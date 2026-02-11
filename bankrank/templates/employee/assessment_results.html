@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}评估结果 - 银行对公信用评估业务系统{% endblock %}
+
+{% block employee_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">信用评估结果</h2>
+    <p class="text-slate-500 mt-1">查看企业信用评估记录</p>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="grade" class="input-field w-48">
+            <option value="">全部等级</option>
+            <option value="A" {% if selected_grade == 'A' %}selected{% endif %}>A级 (80-100分)</option>
+            <option value="B" {% if selected_grade == 'B' %}selected{% endif %}>B级 (60-79分)</option>
+            <option value="C" {% if selected_grade == 'C' %}selected{% endif %}>C级 (40-59分)</option>
+            <option value="D" {% if selected_grade == 'D' %}selected{% endif %}>D级 (0-39分)</option>
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_grade %}
+        <a href="{{ url_for('employee_assessment_results') }}" class="btn-secondary">清除</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>企业名称</th>
+                    <th>信用评分</th>
+                    <th>信用等级</th>
+                    <th>行业分</th>
+                    <th>负债分</th>
+                    <th>现金流分</th>
+                    <th>诉讼分</th>
+                    <th>评估时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in assessments %}
+                <tr>
+                    <td class="font-medium">{{ a.company_name or '--' }}</td>
+                    <td class="font-bold text-sky-600">{{ a.score }}</td>
+                    <td>
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-bold {% if a.grade == 'A' %}bg-emerald-500{% elif a.grade == 'B' %}bg-sky-500{% elif a.grade == 'C' %}bg-amber-500{% else %}bg-red-500{% endif %}">
+                            {{ a.grade }}
+                        </span>
+                    </td>
+                    <td>{{ a.industry_score }}/25</td>
+                    <td>{{ a.debt_score }}/25</td>
+                    <td>{{ a.cashflow_score }}/25</td>
+                    <td>{{ a.litigation_score }}/25</td>
+                    <td>{{ a.assess_time.strftime('%Y-%m-%d %H:%M') if a.assess_time else '--' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-slate-400 py-8">暂无评估记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

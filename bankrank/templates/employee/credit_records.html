@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}征信记录 - 银行对公信用评估业务系统{% endblock %}
+
+{% block employee_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">企业征信记录</h2>
+    <p class="text-slate-500 mt-1">查看企业征信历史信息</p>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="enterprise_id" class="input-field flex-1">
+            <option value="">全部企业</option>
+            {% for e in enterprises %}
+            <option value="{{ e.id }}" {% if selected_ent == e.id|string %}selected{% endif %}>{{ e.company_name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>企业名称</th>
+                    <th>记录类型</th>
+                    <th>记录来源</th>
+                    <th>记录内容</th>
+                    <th>记录日期</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td class="font-medium">{{ r.company_name or '--' }}</td>
+                    <td>
+                        {% if r.record_type == 'inquiry' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-700">查询</span>
+                        {% elif r.record_type == 'positive' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">正面</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">负面</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ r.record_source or '--' }}</td>
+                    <td>{{ r.record_content or '--' }}</td>
+                    <td>{{ r.record_date.strftime('%Y-%m-%d') if r.record_date else '--' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-slate-400 py-8">暂无征信记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}贷款数据管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}贷款数据管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">贷款数据管理</h2>
+        <p class="text-slate-500 mt-1">管理企业贷款记录</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加贷款</button>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="status" class="input-field w-48">
+            <option value="">全部状态</option>
+            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>待审批</option>
+            <option value="repaying" {% if selected_status == 'repaying' %}selected{% endif %}>还款中</option>
+            <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>已结清</option>
+            <option value="rejected" {% if selected_status == 'rejected' %}selected{% endif %}>已拒绝</option>
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_status %}<a href="{{ url_for('admin_loan_data') }}" class="btn-secondary">清除</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr><th>ID</th><th>贷款编号</th><th>企业</th><th>金额</th><th>利率</th><th>期限</th><th>剩余</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+                {% for l in loans %}
+                <tr>
+                    <td>{{ l.id }}</td>
+                    <td class="font-mono text-sm">{{ l.loan_no }}</td>
+                    <td>{{ l.company_name or '--' }}</td>
+                    <td>¥{{ "%.2f"|format(l.loan_amount) }}</td>
+                    <td>{{ l.interest_rate }}%</td>
+                    <td>{{ l.loan_term }}月</td>
+                    <td class="text-sky-600">¥{{ "%.2f"|format(l.remaining_amount) }}</td>
+                    <td>
+                        {% if l.status == 'pending' %}<span class="text-amber-600">待审批</span>
+                        {% elif l.status == 'repaying' %}<span class="text-emerald-600">还款中</span>
+                        {% elif l.status == 'completed' %}<span class="text-slate-600">已结清</span>
+                        {% else %}<span class="text-red-600">已拒绝</span>{% endif %}
+                    </td>
+                    <td>
+                        <button onclick="showEditModal({{ l|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除？')">
+                            <input type="hidden" name="action" value="delete"><input type="hidden" name="loan_id" value="{{ l.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}<tr><td colspan="9" class="text-center text-slate-400 py-8">暂无数据</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[500px] shadow-2xl">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加贷款</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="loan_id" id="form-id">
+            <div class="space-y-4">
+                <div><label class="block text-slate-600 text-sm mb-2">企业</label><select name="enterprise_id" id="form-enterprise-id" class="input-field">{% for e in enterprises %}<option value="{{ e.id }}">{{ e.company_name }}</option>{% endfor %}</select></div>
+                <div><label class="block text-slate-600 text-sm mb-2">贷款金额</label><input type="number" name="loan_amount" id="form-amount" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">年利率(%)</label><input type="number" name="interest_rate" id="form-rate" class="input-field" step="0.01" value="4.35"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">期限(月)</label><input type="number" name="loan_term" id="form-term" class="input-field" value="12"></div>
+                <div id="remaining-field" class="hidden"><label class="block text-slate-600 text-sm mb-2">剩余本金</label><input type="number" name="remaining_amount" id="form-remaining" class="input-field" step="0.01"></div>
+                <div><label class="block text-slate-600 text-sm mb-2">状态</label><select name="status" id="form-status" class="input-field"><option value="pending">待审批</option><option value="repaying">还款中</option><option value="completed">已结清</option><option value="rejected">已拒绝</option></select></div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加贷款'); $('#form-action').val('add'); $('#form-id').val('');
+    $('#form-amount,#form-remaining').val(''); $('#form-rate').val('4.35'); $('#form-term').val('12'); $('#form-status').val('pending');
+    $('#remaining-field').addClass('hidden'); $('#modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(l) {
+    $('#modal-title').text('编辑贷款'); $('#form-action').val('edit'); $('#form-id').val(l.id);
+    $('#form-enterprise-id').val(l.enterprise_id); $('#form-amount').val(l.loan_amount); $('#form-rate').val(l.interest_rate);
+    $('#form-term').val(l.loan_term); $('#form-remaining').val(l.remaining_amount); $('#form-status').val(l.status);
+    $('#remaining-field').removeClass('hidden'); $('#modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() { $('#modal').removeClass('flex').addClass('hidden'); }
+</script>
+{% endblock %}

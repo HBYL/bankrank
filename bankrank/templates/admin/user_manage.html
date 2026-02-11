@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - 银行对公信用评估业务系统{% endblock %}
+{% block page_title %}用户管理{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">用户管理</h2>
+        <p class="text-slate-500 mt-1">管理系统用户账号</p>
+    </div>
+    <button onclick="showAddModal()" class="btn-primary"><i class="fa fa-plus mr-2"></i>添加用户</button>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="role" class="input-field w-48">
+            <option value="">全部角色</option>
+            <option value="enterprise" {% if selected_role == 'enterprise' %}selected{% endif %}>企业用户</option>
+            <option value="employee" {% if selected_role == 'employee' %}selected{% endif %}>银行员工</option>
+            <option value="admin" {% if selected_role == 'admin' %}selected{% endif %}>管理员</option>
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_role %}
+        <a href="{{ url_for('admin_user_manage') }}" class="btn-secondary">清除</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>姓名/企业名</th>
+                    <th>角色</th>
+                    <th>电话</th>
+                    <th>邮箱</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td class="font-medium">{{ u.username }}</td>
+                    <td>{{ u.name or '--' }}</td>
+                    <td>
+                        {% if u.role == 'enterprise' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-700">企业</span>
+                        {% elif u.role == 'employee' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">员工</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">管理员</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.phone or '--' }}</td>
+                    <td>{{ u.email or '--' }}</td>
+                    <td>
+                        {% if u.status == 1 %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">启用</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">禁用</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.create_time.strftime('%Y-%m-%d') if u.create_time else '--' }}</td>
+                    <td>
+                        <button onclick="showEditModal({{ u|tojson }})" class="text-sky-500 hover:text-sky-600 mr-2"><i class="fa fa-edit"></i></button>
+                        <form method="POST" class="inline" onsubmit="return confirm('确定删除该用户？')">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                            <button type="submit" class="text-red-500 hover:text-red-600"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-slate-400 py-8">暂无用户数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 添加/编辑弹窗 -->
+<div id="user-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-[500px] shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800 mb-4">添加用户</h3>
+        <form method="POST">
+            <input type="hidden" name="action" id="form-action" value="add">
+            <input type="hidden" name="user_id" id="form-user-id">
+            <div class="grid grid-cols-2 gap-4">
+                <div id="username-field">
+                    <label class="block text-slate-600 text-sm font-medium mb-2">用户名</label>
+                    <input type="text" name="username" id="form-username" class="input-field" required>
+                </div>
+                <div id="password-field">
+                    <label class="block text-slate-600 text-sm font-medium mb-2">密码</label>
+                    <input type="password" name="password" id="form-password" class="input-field">
+                </div>
+                <div>
+                    <label class="block text-slate-600 text-sm font-medium mb-2">姓名/企业名</label>
+                    <input type="text" name="name" id="form-name" class="input-field">
+                </div>
+                <div>
+                    <label class="block text-slate-600 text-sm font-medium mb-2">角色</label>
+                    <select name="role" id="form-role" class="input-field">
+                        <option value="enterprise">企业用户</option>
+                        <option value="employee">银行员工</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-600 text-sm font-medium mb-2">电话</label>
+                    <input type="text" name="phone" id="form-phone" class="input-field">
+                </div>
+                <div>
+                    <label class="block text-slate-600 text-sm font-medium mb-2">邮箱</label>
+                    <input type="email" name="email" id="form-email" class="input-field">
+                </div>
+                <div id="status-field" class="hidden">
+                    <label class="block text-slate-600 text-sm font-medium mb-2">状态</label>
+                    <select name="status" id="form-status" class="input-field">
+                        <option value="1">启用</option>
+                        <option value="0">禁用</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="hideModal()" class="btn-secondary flex-1">取消</button>
+                <button type="submit" class="btn-primary flex-1">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddModal() {
+    $('#modal-title').text('添加用户');
+    $('#form-action').val('add');
+    $('#form-user-id').val('');
+    $('#form-username').val('').prop('disabled', false);
+    $('#form-password').val('').prop('required', true);
+    $('#form-name').val('');
+    $('#form-role').val('enterprise');
+    $('#form-phone').val('');
+    $('#form-email').val('');
+    $('#username-field').show();
+    $('#password-field').show();
+    $('#status-field').addClass('hidden');
+    $('#user-modal').removeClass('hidden').addClass('flex');
+}
+function showEditModal(user) {
+    $('#modal-title').text('编辑用户');
+    $('#form-action').val('edit');
+    $('#form-user-id').val(user.id);
+    $('#form-username').val(user.username).prop('disabled', true);
+    $('#form-password').val('').prop('required', false);
+    $('#form-name').val(user.name);
+    $('#form-role').val(user.role);
+    $('#form-phone').val(user.phone);
+    $('#form-email').val(user.email);
+    $('#form-status').val(user.status);
+    $('#username-field').hide();
+    $('#password-field').hide();
+    $('#status-field').removeClass('hidden');
+    $('#user-modal').removeClass('hidden').addClass('flex');
+}
+function hideModal() {
+    $('#user-modal').removeClass('flex').addClass('hidden');
+}
+</script>
+{% endblock %}

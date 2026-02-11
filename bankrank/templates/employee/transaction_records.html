@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}交易记录 - 银行对公信用评估业务系统{% endblock %}
+
+{% block employee_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">企业交易记录</h2>
+    <p class="text-slate-500 mt-1">查看企业存取款交易流水</p>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="enterprise_id" class="input-field flex-1">
+            <option value="">全部企业</option>
+            {% for e in enterprises %}
+            <option value="{{ e.id }}" {% if selected_ent == e.id|string %}selected{% endif %}>{{ e.company_name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_ent %}
+        <a href="{{ url_for('employee_transaction_records') }}" class="btn-secondary">清除</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>企业名称</th>
+                    <th>交易类型</th>
+                    <th>交易金额</th>
+                    <th>交易后余额</th>
+                    <th>备注</th>
+                    <th>交易时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td class="font-medium">{{ t.company_name or '--' }}</td>
+                    <td>
+                        {% if t.trans_type == 'deposit' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            <i class="fa fa-plus mr-1"></i>存入
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            <i class="fa fa-minus mr-1"></i>支取
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="{% if t.trans_type == 'deposit' %}text-emerald-600{% else %}text-red-600{% endif %} font-medium">
+                        {% if t.trans_type == 'deposit' %}+{% else %}-{% endif %}¥{{ "%.2f"|format(t.amount) }}
+                    </td>
+                    <td>¥{{ "%.2f"|format(t.balance_after) }}</td>
+                    <td class="text-slate-500">{{ t.remark or '--' }}</td>
+                    <td>{{ t.create_time.strftime('%Y-%m-%d %H:%M:%S') if t.create_time else '--' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-slate-400 py-8">暂无交易记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

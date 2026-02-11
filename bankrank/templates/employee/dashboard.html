@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}员工仪表盘 - 银行对公信用评估业务系统{% endblock %}
+
+{% block employee_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">工作台</h2>
+    <p class="text-slate-500 mt-1">欢迎回来，{{ session['name'] }}</p>
+</div>
+
+<!-- 统计卡片 -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">企业客户数</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ ent_count }}</p>
+            </div>
+            <div class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-building text-sky-500 text-xl"></i>
+            </div>
+        </div>
+        <a href="{{ url_for('employee_enterprise_list') }}" class="text-sky-500 text-sm mt-3 inline-block hover:underline">查看详情 →</a>
+    </div>
+    
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">待审批贷款</p>
+                <p class="text-2xl font-bold text-amber-500 mt-1">{{ pending_loans }}</p>
+            </div>
+            <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-clock-o text-amber-500 text-xl"></i>
+            </div>
+        </div>
+        <a href="{{ url_for('employee_loan_manage') }}?status=pending" class="text-sky-500 text-sm mt-3 inline-block hover:underline">立即处理 →</a>
+    </div>
+    
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">进行中贷款</p>
+                <p class="text-2xl font-bold text-emerald-500 mt-1">{{ active_loans }}</p>
+            </div>
+            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-money text-emerald-500 text-xl"></i>
+            </div>
+        </div>
+        <a href="{{ url_for('employee_loan_manage') }}?status=repaying" class="text-sky-500 text-sm mt-3 inline-block hover:underline">查看详情 →</a>
+    </div>
+    
+    <div class="stat-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-500 text-sm">累计放款</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">¥{{ "%.0f"|format(total_loan) }}</p>
+            </div>
+            <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-line-chart text-slate-500 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- 信用等级分布 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-pie-chart text-sky-500 mr-2"></i>客户信用等级分布</h3>
+        <div id="grade-chart" style="height: 300px;"></div>
+    </div>
+    
+    <!-- 快捷操作 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-bolt text-sky-500 mr-2"></i>快捷操作</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <a href="{{ url_for('employee_enterprise_list') }}" class="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+                <div class="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="fa fa-building text-sky-500"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-700">企业管理</p>
+                    <p class="text-xs text-slate-400">查看企业信息</p>
+                </div>
+            </a>
+            <a href="{{ url_for('employee_loan_manage') }}?status=pending" class="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+                <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="fa fa-check-square-o text-amber-500"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-700">贷款审批</p>
+                    <p class="text-xs text-slate-400">处理待审批贷款</p>
+                </div>
+            </a>
+            <a href="{{ url_for('employee_credit_records') }}" class="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+                <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="fa fa-file-text text-emerald-500"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-700">征信记录</p>
+                    <p class="text-xs text-slate-400">查看征信信息</p>
+                </div>
+            </a>
+            <a href="{{ url_for('employee_assessment_results') }}" class="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="fa fa-star text-purple-500"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-700">评估结果</p>
+                    <p class="text-xs text-slate-400">查看信用评估</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function(){
+    var gradeChart = echarts.init(document.getElementById('grade-chart'));
+    gradeChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+        legend: { bottom: 0, textStyle: { color: '#64748b' } },
+        series: [{
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+            label: { show: false },
+            emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
+            data: [
+                {% for g in grade_stats %}
+                { value: {{ g.cnt }}, name: '{{ g.grade }}级', itemStyle: { color: '{% if g.grade == "A" %}#10b981{% elif g.grade == "B" %}#0ea5e9{% elif g.grade == "C" %}#f59e0b{% else %}#ef4444{% endif %}' } }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
+        }]
+    });
+    $(window).resize(function(){ gradeChart.resize(); });
+});
+</script>
+{% endblock %}

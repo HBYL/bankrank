@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+{% block title %}信用评估 - 银行对公信用评估业务系统{% endblock %}
+
+{% block enterprise_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">信用评估问卷</h2>
+    <p class="text-slate-500 mt-1">完成15项评估指标即可获得综合信用评分和等级</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 评估问卷 -->
+    <div class="card lg:col-span-2">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-file-text text-sky-500 mr-2"></i>综合评估问卷（15项指标）</h3>
+        <form method="POST">
+            <div class="space-y-5">
+                <!-- 第一部分：基本信息 -->
+                <div class="p-3 bg-sky-50 rounded-lg">
+                    <h4 class="font-medium text-sky-700 mb-3"><i class="fa fa-building mr-2"></i>企业基本信息</h4>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">1. 企业所属行业</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="industry" value="finance" class="mr-2" required> 金融业
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="industry" value="technology" class="mr-2"> 科技/互联网
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="industry" value="manufacturing" class="mr-2"> 制造业
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="industry" value="retail" class="mr-2"> 零售业
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="industry" value="construction" class="mr-2"> 建筑业
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="industry" value="other" class="mr-2"> 其他
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">2. 企业成立年限</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="company_years" value="15" class="mr-2" required> 10年以上
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="company_years" value="7" class="mr-2"> 5-10年
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="company_years" value="4" class="mr-2"> 3-5年
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="company_years" value="1" class="mr-2"> 3年以下
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg">
+                        <label class="block text-slate-700 font-medium mb-2">3. 注册资本规模（万元）</label>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="registered_capital_range" value="above_5000" class="mr-2" required> 5000万以上
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="registered_capital_range" value="1000_5000" class="mr-2"> 1000-5000万
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="registered_capital_range" value="500_1000" class="mr-2"> 500-1000万
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="registered_capital_range" value="100_500" class="mr-2"> 100-500万
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="registered_capital_range" value="below_100" class="mr-2"> 100万以下
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第二部分：财务指标 -->
+                <div class="p-3 bg-emerald-50 rounded-lg">
+                    <h4 class="font-medium text-emerald-700 mb-3"><i class="fa fa-dollar mr-2"></i>财务状况指标</h4>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">4. 企业负债率（%）</label>
+                        <input type="range" name="debt_ratio" min="0" max="100" value="50" class="w-full" id="debt-slider" oninput="document.getElementById('debt-value').textContent=this.value+'%'">
+                        <div class="flex justify-between text-sm text-slate-500 mt-1">
+                            <span>0%</span>
+                            <span id="debt-value" class="font-medium text-sky-600">50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">5. 现金流状况</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="cash_flow" value="excellent" class="mr-2" required> 优秀
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="cash_flow" value="good" class="mr-2"> 良好
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="cash_flow" value="normal" class="mr-2"> 一般
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="cash_flow" value="poor" class="mr-2"> 较差
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">6. 年营业收入</label>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="annual_revenue" value="above_1y" class="mr-2" required> 1亿以上
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="annual_revenue" value="5000w_1y" class="mr-2"> 5000万-1亿
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="annual_revenue" value="1000w_5000w" class="mr-2"> 1000-5000万
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="annual_revenue" value="500w_1000w" class="mr-2"> 500-1000万
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="annual_revenue" value="below_500w" class="mr-2"> 500万以下
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">7. 净利润率</label>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="profit_rate" value="above_20" class="mr-2" required> 20%以上
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="profit_rate" value="10_20" class="mr-2"> 10%-20%
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="profit_rate" value="5_10" class="mr-2"> 5%-10%
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="profit_rate" value="0_5" class="mr-2"> 0%-5%
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="profit_rate" value="negative" class="mr-2"> 亏损
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg">
+                        <label class="block text-slate-700 font-medium mb-2">8. 资产负债结构</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="asset_structure" value="excellent" class="mr-2" required> 优秀
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="asset_structure" value="good" class="mr-2"> 良好
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="asset_structure" value="normal" class="mr-2"> 一般
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="asset_structure" value="poor" class="mr-2"> 较差
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第三部分：信用记录 -->
+                <div class="p-3 bg-amber-50 rounded-lg">
+                    <h4 class="font-medium text-amber-700 mb-3"><i class="fa fa-history mr-2"></i>信用记录指标</h4>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">9. 近三年涉诉记录数量</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="litigation_count" value="0" class="mr-2" required> 无
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="litigation_count" value="2" class="mr-2"> 1-2件
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="litigation_count" value="5" class="mr-2"> 3-5件
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="litigation_count" value="10" class="mr-2"> 5件以上
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">10. 银行信贷记录</label>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="bank_credit_record" value="excellent" class="mr-2" required> 优秀
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="bank_credit_record" value="good" class="mr-2"> 良好
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="bank_credit_record" value="normal" class="mr-2"> 一般
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="bank_credit_record" value="poor" class="mr-2"> 较差
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="bank_credit_record" value="none" class="mr-2"> 无记录
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg">
+                        <label class="block text-slate-700 font-medium mb-2">11. 税务信用等级</label>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="tax_credit_level" value="A" class="mr-2" required> A级
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="tax_credit_level" value="B" class="mr-2"> B级
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="tax_credit_level" value="M" class="mr-2"> M级
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="tax_credit_level" value="C" class="mr-2"> C级
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="tax_credit_level" value="D" class="mr-2"> D级
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第四部分：运营能力 -->
+                <div class="p-3 bg-purple-50 rounded-lg">
+                    <h4 class="font-medium text-purple-700 mb-3"><i class="fa fa-cogs mr-2"></i>运营能力指标</h4>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">12. 社保缴纳情况</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="social_security" value="full" class="mr-2" required> 全额缴纳
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="social_security" value="partial" class="mr-2"> 部分缴纳
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="social_security" value="irregular" class="mr-2"> 不规律
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="social_security" value="none" class="mr-2"> 未缴纳
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">13. 供应链稳定性</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="supply_chain" value="very_stable" class="mr-2" required> 非常稳定
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="supply_chain" value="stable" class="mr-2"> 稳定
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="supply_chain" value="normal" class="mr-2"> 一般
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="supply_chain" value="unstable" class="mr-2"> 不稳定
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg mb-3">
+                        <label class="block text-slate-700 font-medium mb-2">14. 市场竞争力</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="market_position" value="leader" class="mr-2" required> 行业领先
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="market_position" value="strong" class="mr-2"> 较强
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="market_position" value="normal" class="mr-2"> 一般
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="market_position" value="weak" class="mr-2"> 较弱
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white rounded-lg">
+                        <label class="block text-slate-700 font-medium mb-2">15. 管理团队经验</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="management_team" value="excellent" class="mr-2" required> 非常丰富
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="management_team" value="experienced" class="mr-2"> 经验丰富
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="management_team" value="normal" class="mr-2"> 一般
+                            </label>
+                            <label class="flex items-center p-2 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:border-sky-300 text-sm">
+                                <input type="radio" name="management_team" value="inexperienced" class="mr-2"> 经验不足
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <button type="submit" class="btn-primary w-full py-3 text-lg">
+                    <i class="fa fa-calculator mr-2"></i>提交综合评估
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 评估结果和历史 -->
+    <div class="space-y-6">
+        {% if result %}
+        <div class="card bg-gradient-to-br from-sky-500 to-cyan-500 text-white animate__animated animate__fadeIn">
+            <h3 class="text-lg font-semibold mb-4"><i class="fa fa-star mr-2"></i>评估结果</h3>
+            <div class="text-center py-4">
+                <p class="text-5xl font-bold animate__animated animate__bounceIn">{{ result.score }}</p>
+                <p class="text-sm opacity-80 mt-1">综合信用评分（满分100）</p>
+                <div class="mt-4 inline-block px-6 py-2 bg-white/20 rounded-full">
+                    <span class="text-2xl font-bold">{{ result.grade }}级</span>
+                </div>
+            </div>
+            {% if result.risk_indicators %}
+            <div class="mt-4 p-3 bg-white/10 rounded-lg">
+                <p class="text-sm font-medium mb-2">风险评估：</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 rounded text-xs {% if result.risk_indicators.overall_risk == 'low' %}bg-emerald-400{% elif result.risk_indicators.overall_risk == 'medium' %}bg-amber-400{% else %}bg-red-400{% endif %}">
+                        综合: {% if result.risk_indicators.overall_risk == 'low' %}低{% elif result.risk_indicators.overall_risk == 'medium' %}中{% else %}高{% endif %}
+                    </span>
+                    <span class="px-2 py-1 rounded text-xs {% if result.risk_indicators.financial_risk == 'low' %}bg-emerald-400{% elif result.risk_indicators.financial_risk == 'medium' %}bg-amber-400{% else %}bg-red-400{% endif %}">
+                        财务: {% if result.risk_indicators.financial_risk == 'low' %}低{% elif result.risk_indicators.financial_risk == 'medium' %}中{% else %}高{% endif %}
+                    </span>
+                    <span class="px-2 py-1 rounded text-xs {% if result.risk_indicators.legal_risk == 'low' %}bg-emerald-400{% elif result.risk_indicators.legal_risk == 'medium' %}bg-amber-400{% else %}bg-red-400{% endif %}">
+                        法律: {% if result.risk_indicators.legal_risk == 'low' %}低{% elif result.risk_indicators.legal_risk == 'medium' %}中{% else %}高{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- 历史评估 -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-history text-sky-500 mr-2"></i>历史评估</h3>
+            <div class="space-y-3">
+                {% for a in assessments %}
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-sky-50 transition-colors">
+                    <div>
+                        <p class="font-medium text-slate-700">{{ a.score }}分 / {{ a.grade }}级</p>
+                        <p class="text-xs text-slate-400">{{ a.assess_time.strftime('%Y-%m-%d %H:%M') if a.assess_time else '--' }}</p>
+                    </div>
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold {% if a.grade == 'A' %}bg-emerald-500{% elif a.grade == 'B' %}bg-sky-500{% elif a.grade == 'C' %}bg-amber-500{% else %}bg-red-500{% endif %}">
+                        {{ a.grade }}
+                    </span>
+                </div>
+                {% else %}
+                <p class="text-center text-slate-400 py-4">暂无历史评估记录</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 评分说明 -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-info-circle text-sky-500 mr-2"></i>评分说明</h3>
+            <div class="space-y-2 text-sm">
+                <div class="p-2 bg-sky-50 rounded">
+                    <p class="font-medium text-sky-700">企业基本信息（3项）</p>
+                    <p class="text-slate-500">行业、年限、注册资本</p>
+                </div>
+                <div class="p-2 bg-emerald-50 rounded">
+                    <p class="font-medium text-emerald-700">财务状况指标（5项）</p>
+                    <p class="text-slate-500">负债率、现金流、营收、利润率、资产结构</p>
+                </div>
+                <div class="p-2 bg-amber-50 rounded">
+                    <p class="font-medium text-amber-700">信用记录指标（3项）</p>
+                    <p class="text-slate-500">诉讼记录、银行信贷、税务信用</p>
+                </div>
+                <div class="p-2 bg-purple-50 rounded">
+                    <p class="font-medium text-purple-700">运营能力指标（4项）</p>
+                    <p class="text-slate-500">社保、供应链、市场竞争力、管理团队</p>
+                </div>
+                <div class="border-t border-slate-200 pt-2 mt-2">
+                    <div class="flex justify-between"><span class="text-emerald-600">A级</span><span>80-100分</span></div>
+                    <div class="flex justify-between"><span class="text-sky-600">B级</span><span>60-79分</span></div>
+                    <div class="flex justify-between"><span class="text-amber-600">C级</span><span>40-59分</span></div>
+                    <div class="flex justify-between"><span class="text-red-600">D级</span><span>0-39分</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

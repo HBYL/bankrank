@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}存取款 - 银行对公信用评估业务系统{% endblock %}
+
+{% block enterprise_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">虚拟对公账户</h2>
+    <p class="text-slate-500 mt-1">管理您的企业资金账户</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- 账户信息 -->
+    <div class="card lg:col-span-1">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">账户信息</h3>
+        <div class="bg-gradient-to-r from-sky-500 to-cyan-500 rounded-lg p-6 text-white">
+            <p class="text-sm opacity-80">账户号</p>
+            <p class="text-lg font-mono mt-1">{{ account.account_no }}</p>
+            <p class="text-sm opacity-80 mt-4">当前余额</p>
+            <p class="text-3xl font-bold mt-1">¥{{ "%.2f"|format(account.balance) }}</p>
+        </div>
+    </div>
+    
+    <!-- 存款操作 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-plus-circle text-emerald-500 mr-2"></i>存入资金</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="deposit">
+            <div class="mb-4">
+                <label class="block text-slate-600 text-sm font-medium mb-2">存入金额</label>
+                <input type="number" name="amount" step="0.01" min="0.01" class="input-field" placeholder="请输入存入金额" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-slate-600 text-sm font-medium mb-2">备注</label>
+                <input type="text" name="remark" class="input-field" placeholder="可选备注">
+            </div>
+            <button type="submit" class="btn-success w-full"><i class="fa fa-check mr-2"></i>确认存入</button>
+        </form>
+    </div>
+    
+    <!-- 取款操作 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-minus-circle text-red-500 mr-2"></i>支取资金</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="withdraw">
+            <div class="mb-4">
+                <label class="block text-slate-600 text-sm font-medium mb-2">支取金额</label>
+                <input type="number" name="amount" step="0.01" min="0.01" max="{{ account.balance }}" class="input-field" placeholder="请输入支取金额" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-slate-600 text-sm font-medium mb-2">备注</label>
+                <input type="text" name="remark" class="input-field" placeholder="可选备注">
+            </div>
+            <button type="submit" class="btn-danger w-full"><i class="fa fa-check mr-2"></i>确认支取</button>
+        </form>
+    </div>
+</div>
+
+<!-- 交易流水 -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-list text-sky-500 mr-2"></i>交易流水明细</h3>
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>交易时间</th>
+                    <th>交易类型</th>
+                    <th>交易金额</th>
+                    <th>交易后余额</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td>{{ t.create_time.strftime('%Y-%m-%d %H:%M:%S') if t.create_time else '--' }}</td>
+                    <td>
+                        {% if t.trans_type == 'deposit' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            <i class="fa fa-plus mr-1"></i>存入
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            <i class="fa fa-minus mr-1"></i>支取
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="{% if t.trans_type == 'deposit' %}text-emerald-600{% else %}text-red-600{% endif %} font-medium">
+                        {% if t.trans_type == 'deposit' %}+{% else %}-{% endif %}¥{{ "%.2f"|format(t.amount) }}
+                    </td>
+                    <td>¥{{ "%.2f"|format(t.balance_after) }}</td>
+                    <td class="text-slate-500">{{ t.remark or '--' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-slate-400 py-8">暂无交易记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

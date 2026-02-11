@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}贷款管理 - 银行对公信用评估业务系统{% endblock %}
+
+{% block employee_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">贷款管理</h2>
+    <p class="text-slate-500 mt-1">审批和管理企业贷款</p>
+</div>
+
+<div class="card mb-6">
+    <form method="GET" class="flex gap-4">
+        <select name="status" class="input-field w-48">
+            <option value="">全部状态</option>
+            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>待审批</option>
+            <option value="repaying" {% if selected_status == 'repaying' %}selected{% endif %}>还款中</option>
+            <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>已结清</option>
+            <option value="rejected" {% if selected_status == 'rejected' %}selected{% endif %}>已拒绝</option>
+        </select>
+        <button type="submit" class="btn-primary"><i class="fa fa-filter mr-2"></i>筛选</button>
+        {% if selected_status %}
+        <a href="{{ url_for('employee_loan_manage') }}" class="btn-secondary">清除</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>贷款编号</th>
+                    <th>企业名称</th>
+                    <th>贷款金额</th>
+                    <th>年利率</th>
+                    <th>期限</th>
+                    <th>剩余本金</th>
+                    <th>状态</th>
+                    <th>申请时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in loans %}
+                <tr>
+                    <td class="font-mono text-sm">{{ l.loan_no }}</td>
+                    <td class="font-medium">{{ l.company_name or '--' }}</td>
+                    <td>¥{{ "%.2f"|format(l.loan_amount) }}</td>
+                    <td>{{ l.interest_rate }}%</td>
+                    <td>{{ l.loan_term }}个月</td>
+                    <td class="text-sky-600 font-medium">¥{{ "%.2f"|format(l.remaining_amount) }}</td>
+                    <td>
+                        {% if l.status == 'pending' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">待审批</span>
+                        {% elif l.status == 'repaying' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">还款中</span>
+                        {% elif l.status == 'completed' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">已结清</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">已拒绝</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ l.apply_time.strftime('%Y-%m-%d') if l.apply_time else '--' }}</td>
+                    <td>
+                        {% if l.status == 'pending' %}
+                        <form method="POST" class="inline">
+                            <input type="hidden" name="loan_id" value="{{ l.id }}">
+                            <button type="submit" name="action" value="approve" class="btn-success text-sm py-1 px-2 mr-1">
+                                <i class="fa fa-check"></i> 批准
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn-danger text-sm py-1 px-2">
+                                <i class="fa fa-times"></i> 拒绝
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-slate-400">--</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-slate-400 py-8">暂无贷款记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

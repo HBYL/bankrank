@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}征信查询 - 银行对公信用评估业务系统{% endblock %}
+
+{% block enterprise_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">征信信息查询</h2>
+    <p class="text-slate-500 mt-1">查询企业征信相关信息</p>
+</div>
+
+<div class="card mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-link text-sky-500 mr-2"></i>征信查询入口</h3>
+    <p class="text-slate-600 mb-6">点击下方链接可跳转至官方征信查询平台，查询企业相关征信信息。</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for link in links %}
+        <a href="{{ link.link_url }}" target="_blank" class="block p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-sky-300 hover:bg-sky-50 transition-all group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="font-medium text-slate-800 group-hover:text-sky-600">{{ link.link_name }}</h4>
+                    <p class="text-xs text-slate-400 mt-1 truncate">{{ link.link_url }}</p>
+                </div>
+                <i class="fa fa-external-link text-slate-400 group-hover:text-sky-500"></i>
+            </div>
+        </a>
+        {% else %}
+        <div class="col-span-full text-center text-slate-400 py-8">
+            <i class="fa fa-link text-4xl mb-2"></i>
+            <p>暂无可用的征信查询链接</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-info-circle text-sky-500 mr-2"></i>查询说明</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="p-4 bg-sky-50 rounded-lg">
+            <h4 class="font-medium text-sky-700 mb-2">全国法院被执行人信息查询</h4>
+            <p class="text-sm text-slate-600">可查询企业是否存在被执行记录、失信被执行人记录等法院执行信息。</p>
+        </div>
+        <div class="p-4 bg-emerald-50 rounded-lg">
+            <h4 class="font-medium text-emerald-700 mb-2">国家企业信用信息公示系统</h4>
+            <p class="text-sm text-slate-600">可查询企业工商登记信息、行政处罚信息、经营异常名录等。</p>
+        </div>
+        <div class="p-4 bg-amber-50 rounded-lg">
+            <h4 class="font-medium text-amber-700 mb-2">中国人民银行征信中心</h4>
+            <p class="text-sm text-slate-600">可查询企业信用报告，了解企业信贷记录和信用状况。</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-lg">
+            <h4 class="font-medium text-slate-700 mb-2">温馨提示</h4>
+            <p class="text-sm text-slate-600">以上链接均为官方平台，请注意保护企业信息安全，避免在非官方渠道泄露敏感信息。</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

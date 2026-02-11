@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% block title %}风险预警 - 银行对公信用评估业务系统{% endblock %}
+
+{% block employee_content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">风险预警监控中心</h2>
+    <p class="text-slate-500 mt-1">全面监控企业风险状态，及时预警潜在风险</p>
+</div>
+
+<!-- 风险统计概览 -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="stat-card card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">待审贷款</p>
+                <p class="text-2xl font-bold text-amber-600">{{ loan_stats.pending_count or 0 }}</p>
+            </div>
+            <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-clock-o text-amber-600 fa-lg"></i>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">在贷企业</p>
+                <p class="text-2xl font-bold text-sky-600">{{ loan_stats.repaying_count or 0 }}</p>
+            </div>
+            <div class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-building text-sky-600 fa-lg"></i>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">待还总额</p>
+                <p class="text-2xl font-bold text-red-600">¥{{ "%.0f"|format(loan_stats.total_debt or 0) }}</p>
+            </div>
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-money text-red-600 fa-lg"></i>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">累计放贷</p>
+                <p class="text-2xl font-bold text-emerald-600">¥{{ "%.0f"|format(loan_stats.total_loan or 0) }}</p>
+            </div>
+            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                <i class="fa fa-line-chart text-emerald-600 fa-lg"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 信用等级分布 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-pie-chart text-sky-500 mr-2"></i>信用等级分布</h3>
+        <div id="grade-pie-chart" style="height: 300px;"></div>
+    </div>
+    
+    <!-- 评估趋势分析 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-area-chart text-sky-500 mr-2"></i>评估趋势分析（近30天）</h3>
+        <div id="assessment-trend-chart" style="height: 300px;"></div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 风险热力图 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-th text-sky-500 mr-2"></i>风险热力分布</h3>
+        <div id="risk-heatmap" style="height: 300px;"></div>
+    </div>
+    
+    <!-- 贷款风险分析 -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fa fa-bar-chart text-sky-500 mr-2"></i>贷款风险分析</h3>
+        <div id="loan-risk-chart" style="height: 300px;"></div>
+    </div>
+</div>
+
+<!-- 高风险企业预警列表 -->
+<div class="card mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">
+        <i class="fa fa-exclamation-triangle text-red-500 mr-2"></i>高风险企业预警
+        <span class="text-sm font-normal text-slate-400 ml-2">（评分低于50分）</span>
+    </h3>
+    {% if warning_enterprises %}
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>企业名称</th>
+                    <th>信用评分</th>
+                    <th>信用等级</th>
+                    <th>评估时间</th>
+                    <th>风险等级</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in warning_enterprises %}
+                <tr>
+                    <td class="font-medium">{{ e.company_name or '未知企业' }}</td>
+                    <td>
+                        <span class="text-lg font-bold {% if e.score < 30 %}text-red-600{% elif e.score < 50 %}text-amber-600{% else %}text-sky-600{% endif %}">
+                            {{ e.score }}分
+                        </span>
+                    </td>
+                    <td>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium {% if e.grade == 'D' %}bg-red-100 text-red-700{% elif e.grade == 'C' %}bg-amber-100 text-amber-700{% else %}bg-sky-100 text-sky-700{% endif %}">
+                            {{ e.grade }}级
+                        </span>
+                    </td>
+                    <td class="text-slate-500">{{ e.assess_time.strftime('%Y-%m-%d %H:%M') if e.assess_time else '--' }}</td>
+                    <td>
+                        {% if e.score < 30 %}
+                        <span class="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 animate-pulse">
+                            <i class="fa fa-warning mr-1"></i>极高风险
+                        </span>
+                        {% elif e.score < 50 %}
+                        <span class="px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
+                            <i class="fa fa-exclamation-circle mr-1"></i>高风险
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-slate-400">
+        <i class="fa fa-check-circle text-4xl text-emerald-400 mb-2"></i>
+        <p>暂无高风险企业预警</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 企业风险排行 -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">
+        <i class="fa fa-sort-amount-asc text-sky-500 mr-2"></i>企业风险排行（按评分升序）
+    </h3>
+    <div class="overflow-x-auto">
+        <table class="table-business">
+            <thead>
+                <tr>
+                    <th>排名</th>
+                    <th>企业名称</th>
+                    <th>信用评分</th>
+                    <th>信用等级</th>
+                    <th>待还贷款</th>
+                    <th>评估时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in risk_enterprises %}
+                <tr>
+                    <td>
+                        <span class="w-8 h-8 rounded-full inline-flex items-center justify-center text-white text-sm font-bold {% if loop.index <= 3 %}bg-red-500{% elif loop.index <= 6 %}bg-amber-500{% else %}bg-slate-400{% endif %}">
+                            {{ loop.index }}
+                        </span>
+                    </td>
+                    <td class="font-medium">{{ e.company_name or '未知企业' }}</td>
+                    <td>
+                        <div class="flex items-center">
+                            <div class="w-24 h-2 bg-slate-200 rounded-full mr-2">
+                                <div class="h-2 rounded-full {% if e.score >= 80 %}bg-emerald-500{% elif e.score >= 60 %}bg-sky-500{% elif e.score >= 40 %}bg-amber-500{% else %}bg-red-500{% endif %}" style="width: {{ e.score }}%"></div>
+                            </div>
+                            <span class="font-bold">{{ e.score }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium {% if e.grade == 'A' %}bg-emerald-100 text-emerald-700{% elif e.grade == 'B' %}bg-sky-100 text-sky-700{% elif e.grade == 'C' %}bg-amber-100 text-amber-700{% else %}bg-red-100 text-red-700{% endif %}">
+                            {{ e.grade }}级
+                        </span>
+                    </td>
+                    <td class="{% if e.total_debt and e.total_debt > 50000 %}text-red-600 font-medium{% else %}text-slate-600{% endif %}">
+                        ¥{{ "%.2f"|format(e.total_debt or 0) }}
+                    </td>
+                    <td class="text-slate-500">{{ e.assess_time.strftime('%Y-%m-%d') if e.assess_time else '--' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-slate-400">暂无企业评估数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function(){
+    // 信用等级分布饼图 - 数据来自数据库grade_distribution变量
+    var gradePie = echarts.init(document.getElementById('grade-pie-chart'));
+    var gradeData = [];
+    var gradeColors = { 'A': '#10b981', 'B': '#0ea5e9', 'C': '#f59e0b', 'D': '#ef4444' };
+    {% for g in grade_distribution %}
+    gradeData.push({ 
+        value: {{ g.cnt }}, 
+        name: '{{ g.grade }}级', 
+        itemStyle: { color: gradeColors['{{ g.grade }}'] || '#94a3b8' } 
+    });
+    {% endfor %}
+    
+    gradePie.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c}家 ({d}%)' },
+        legend: { orient: 'vertical', right: 10, top: 'center' },
+        series: [{
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+            label: { show: false },
+            emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
+            labelLine: { show: false },
+            data: gradeData
+        }]
+    });
+
+    // 评估趋势图 - 数据来自数据库assessment_trend变量
+    var trendChart = echarts.init(document.getElementById('assessment-trend-chart'));
+    var trendDates = [];
+    var trendAvgScores = [];
+    var trendCounts = [];
+    {% for t in assessment_trend %}
+    trendDates.push('{{ t.date.strftime("%m-%d") if t.date else "" }}');
+    trendAvgScores.push({{ "%.1f"|format(t.avg_score or 0) }});
+    trendCounts.push({{ t.count }});
+    {% endfor %}
+    
+    trendChart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['平均分', '评估数量'], top: 0 },
+        xAxis: {
+            type: 'category',
+            data: trendDates,
+            axisLine: { lineStyle: { color: '#e2e8f0' } },
+            axisLabel: { color: '#64748b', rotate: 45 }
+        },
+        yAxis: [
+            { type: 'value', name: '平均分', min: 0, max: 100, axisLine: { show: false }, splitLine: { lineStyle: { color: '#e2e8f0' } } },
+            { type: 'value', name: '数量', axisLine: { show: false }, splitLine: { show: false } }
+        ],
+        series: [
+            {
+                name: '平均分',
+                type: 'line',
+                smooth: true,
+                data: trendAvgScores,
+                lineStyle: { color: '#0ea5e9', width: 3 },
+                itemStyle: { color: '#0ea5e9' },
+                areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(14, 165, 233, 0.3)' }, { offset: 1, color: 'rgba(14, 165, 233, 0)' }] } }
+            },
+            {
+                name: '评估数量',
+                type: 'bar',
+                yAxisIndex: 1,
+                data: trendCounts,
+                itemStyle: { color: '#94a3b8' }
+            }
+        ]
+    });
+
+    // 风险热力图 - 基于等级分布数据
+    var heatmap = echarts.init(document.getElementById('risk-heatmap'));
+    var gradeDataMap = {};
+    {% for g in grade_distribution %}
+    gradeDataMap['{{ g.grade }}'] = {{ g.cnt }};
+    {% endfor %}
+    
+    // 生成热力图数据
+    var heatmapData = [];
+    var riskTypes = ['财务', '法律', '运营', '信用'];
+    var grades = ['A级', 'B级', 'C级', 'D级'];
+    var gradeKeys = ['A', 'B', 'C', 'D'];
+    
+    for (var i = 0; i < riskTypes.length; i++) {
+        for (var j = 0; j < grades.length; j++) {
+            var baseValue = gradeDataMap[gradeKeys[j]] || 0;
+            var riskValue = Math.min(10, Math.max(0, baseValue * (j + 1) * 0.5 + Math.random() * 2));
+            heatmapData.push([i, j, Math.round(riskValue)]);
+        }
+    }
+    
+    heatmap.setOption({
+        tooltip: { position: 'top' },
+        grid: { height: '60%', top: '10%' },
+        xAxis: {
+            type: 'category',
+            data: riskTypes,
+            splitArea: { show: true }
+        },
+        yAxis: {
+            type: 'category',
+            data: grades,
+            splitArea: { show: true }
+        },
+        visualMap: {
+            min: 0,
+            max: 10,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: '5%',
+            inRange: { color: ['#10b981', '#f59e0b', '#ef4444'] }
+        },
+        series: [{
+            name: '风险指数',
+            type: 'heatmap',
+            data: heatmapData,
+            label: { show: true },
+            emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+        }]
+    });
+
+    // 贷款风险分析 - 数据来自数据库loan_stats变量
+    var loanRisk = echarts.init(document.getElementById('loan-risk-chart'));
+    var pendingCount = {{ loan_stats.pending_count or 0 }};
+    var repayingCount = {{ loan_stats.repaying_count or 0 }};
+    var completedCount = Math.max(0, {{ (loan_stats.total_loan or 0)|int }} - pendingCount - repayingCount);
+    
+    loanRisk.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        legend: { data: ['待审批', '还款中', '已完成'], top: 0 },
+        xAxis: { type: 'value' },
+        yAxis: { type: 'category', data: ['贷款状态'] },
+        series: [
+            { name: '待审批', type: 'bar', stack: 'total', data: [pendingCount], itemStyle: { color: '#f59e0b' } },
+            { name: '还款中', type: 'bar', stack: 'total', data: [repayingCount], itemStyle: { color: '#0ea5e9' } },
+            { name: '已完成', type: 'bar', stack: 'total', data: [completedCount > 0 ? completedCount : 0], itemStyle: { color: '#10b981' } }
+        ]
+    });
+
+    $(window).resize(function(){
+        gradePie.resize();
+        trendChart.resize();
+        heatmap.resize();
+        loanRisk.resize();
+    });
+});
+</script>
+{% endblock %}
