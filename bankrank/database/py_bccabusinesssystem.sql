@@ -274,3 +274,4 @@ INSERT INTO `user` VALUES (5, '3', '3', '测试企业B', 'enterprise', '13800000
 INSERT INTO `user` VALUES (6, '1', '1', '123公司', 'enterprise', '13888888888', '1@qq.com', 1, '2026-01-06 13:27:57', '2026-01-06 13:27:57');
 
 SET FOREIGN_KEY_CHECKS = 1;
+ALTER TABLE credit_assessment ADD COLUMN score_type VARCHAR(10) DEFAULT 'rule' COMMENT '评分类型：rule-规则化，ml-机器学习';

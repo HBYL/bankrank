@@ -6,6 +6,15 @@ from datetime import datetime
 import json
 import requests
 from decimal import Decimal, ROUND_HALF_UP  # 新增：导入Decimal相关工具
+# 新增机器学习相关导入
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
+import joblib
+import os
 
 app = Flask(__name__)
 app.secret_key = 'bank_credit_secret_key_2024'
@@ -166,6 +175,207 @@ def calculate_credit_score(data):
 
     return total_score, grade, scores, risk_indicators
 
+
+# 1. 模拟训练数据生成（实际可替换为真实历史评分/违约数据）
+def generate_training_data(n_samples=10000):
+    """生成企业信用评分训练数据（含特征+标签：是否违约）"""
+    np.random.seed(42)
+    # 特征：与规则化模型15个维度对齐
+    data = {
+        'industry': np.random.choice(['finance', 'technology', 'manufacturing', 'retail', 'construction', 'other'],
+                                     n_samples),
+        'debt_ratio': np.random.uniform(0, 100, n_samples),
+        'cash_flow': np.random.choice(['excellent', 'good', 'normal', 'poor'], n_samples),
+        'litigation_count': np.random.poisson(lam=1, size=n_samples),
+        'company_years': np.random.randint(1, 15, n_samples),
+        'registered_capital_range': np.random.choice(['above_5000', '1000_5000', '500_1000', '100_500', 'below_100'],
+                                                     n_samples),
+        'annual_revenue': np.random.choice(['above_1y', '5000w_1y', '1000w_5000w', '500w_1000w', 'below_500w'],
+                                           n_samples),
+        'profit_rate': np.random.choice(['above_20', '10_20', '5_10', '0_5', 'negative'], n_samples),
+        'asset_structure': np.random.choice(['excellent', 'good', 'normal', 'poor'], n_samples),
+        'bank_credit_record': np.random.choice(['excellent', 'good', 'normal', 'poor', 'none'], n_samples),
+        'tax_credit_level': np.random.choice(['A', 'B', 'C', 'D', 'M'], n_samples),
+        'social_security': np.random.choice(['full', 'partial', 'irregular', 'none'], n_samples),
+        'supply_chain': np.random.choice(['very_stable', 'stable', 'normal', 'unstable'], n_samples),
+        'market_position': np.random.choice(['leader', 'strong', 'normal', 'weak'], n_samples),
+        'management_team': np.random.choice(['excellent', 'experienced', 'normal', 'inexperienced'], n_samples),
+    }
+    df = pd.DataFrame(data)
+
+    # 标签：是否违约（1=违约，0=正常）——基于规则化评分反向生成（模拟真实业务标签）
+    df['rule_score'] = df.apply(lambda x: sum(calculate_credit_score(x)[2].values()), axis=1)
+    df['label'] = (df['rule_score'] < 50).astype(int)  # 规则分<50视为违约
+    return df
+
+
+# 2. 模型训练函数
+def train_credit_model(force_retrain=False):
+    """训练逻辑回归评分模型（首次训练/强制重训）"""
+    # 若模型已存在且不强制重训，直接返回
+    if os.path.exists(MODEL_PATH) and not force_retrain:
+        return
+
+    # 生成训练数据
+    df = generate_training_data()
+
+    # 特征工程：分类特征编码 + 数值特征标准化
+    # 分类特征列表
+    cat_features = ['industry', 'cash_flow', 'registered_capital_range', 'annual_revenue',
+                    'profit_rate', 'asset_structure', 'bank_credit_record', 'tax_credit_level',
+                    'social_security', 'supply_chain', 'market_position', 'management_team']
+    # 数值特征列表
+    num_features = ['debt_ratio', 'litigation_count', 'company_years']
+
+    # 标签编码器（保存用于推理）
+    encoders = {}
+    for feat in cat_features:
+        le = LabelEncoder()
+        df[feat] = le.fit_transform(df[feat])
+        encoders[feat] = le
+
+    # 数值特征标准化（保存用于推理）
+    scaler = StandardScaler()
+    df[num_features] = scaler.fit_transform(df[num_features])
+
+    # 划分训练集/测试集
+    X = df.drop(['rule_score', 'label'], axis=1)
+    y = df['label']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # 训练逻辑回归模型（金融风控首选，可解释性强）
+    model = LogisticRegression(class_weight='balanced', random_state=42)
+    model.fit(X_train, y_train)
+
+    # 模型评估
+    y_pred = model.predict(X_test)
+    y_prob = model.predict_proba(X_test)[:, 1]
+    print(f"模型准确率：{accuracy_score(y_test, y_pred):.4f}")
+    print(f"模型AUC：{roc_auc_score(y_test, y_prob):.4f}")
+    print("分类报告：\n", classification_report(y_test, y_pred))
+
+    # 保存模型/编码器/标准化器
+    joblib.dump(model, MODEL_PATH)
+    joblib.dump(scaler, SCALER_PATH)
+    joblib.dump(encoders, ENCODER_PATH)
+
+
+# 3. 机器学习评分推理函数
+def calculate_ml_credit_score(data):
+    """基于机器学习模型的信用评分（输出：评分、等级、风险、特征权重）"""
+    # 首次运行自动训练模型
+    train_credit_model()
+
+    # 加载模型/编码器/标准化器
+    model = joblib.load(MODEL_PATH)
+    scaler = joblib.load(SCALER_PATH)
+    encoders = joblib.load(ENCODER_PATH)
+
+    # 构造特征DataFrame（与训练数据格式对齐）
+    feat_df = pd.DataFrame([data])
+
+    # 特征预处理（与训练时一致）
+    cat_features = ['industry', 'cash_flow', 'registered_capital_range', 'annual_revenue',
+                    'profit_rate', 'asset_structure', 'bank_credit_record', 'tax_credit_level',
+                    'social_security', 'supply_chain', 'market_position', 'management_team']
+    num_features = ['debt_ratio', 'litigation_count', 'company_years']
+
+    # 分类特征编码（处理未知类别）
+    for feat in cat_features:
+        le = encoders[feat]
+        # 未知类别映射为-1
+        feat_df[feat] = feat_df[feat].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
+
+    # 数值特征标准化（处理异常值）
+    for feat in num_features:
+        try:
+            feat_df[feat] = float(feat_df[feat].iloc[0])
+        except (ValueError, TypeError):
+            feat_df[feat] = 0.0
+    feat_df[num_features] = scaler.transform(feat_df[num_features])
+
+    # 模型推理：违约概率
+    default_prob = model.predict_proba(feat_df)[0][1]
+    # 转换为0-100分（反向映射：违约概率越低，评分越高）
+    ml_score = int((1 - default_prob) * 100)
+
+    # 等级划分（与规则化模型对齐）
+    if ml_score >= 80:
+        ml_grade = 'A'
+    elif ml_score >= 60:
+        ml_grade = 'B'
+    elif ml_score >= 40:
+        ml_grade = 'C'
+    else:
+        ml_grade = 'D'
+
+    # 风险指标（基于机器学习评分）
+    ml_risk = {
+        'overall_risk': 'low' if ml_score >= 70 else ('medium' if ml_score >= 50 else 'high'),
+        'default_probability': f"{default_prob:.4f}"  # 新增：违约概率（机器学习特有）
+    }
+
+    # 特征重要性（可解释性）
+    feat_importance = dict(zip(model.feature_names_in_, model.coef_[0]))
+
+    return ml_score, ml_grade, ml_risk, feat_importance
+
+
+# ==================== 改造原有评分接口：支持双模型对比 ====================
+@app.route('/enterprise/credit_assessment', methods=['GET', 'POST'])
+@login_required
+@role_required('enterprise')
+def credit_assessment():
+    if request.method == 'POST':
+        # 获取表单数据
+        data = {
+            'industry': request.form.get('industry'),
+            'debt_ratio': request.form.get('debt_ratio'),
+            'cash_flow': request.form.get('cash_flow'),
+            'litigation_count': request.form.get('litigation_count'),
+            'company_years': request.form.get('company_years'),
+            'registered_capital_range': request.form.get('registered_capital_range'),
+            'annual_revenue': request.form.get('annual_revenue'),
+            'profit_rate': request.form.get('profit_rate'),
+            'asset_structure': request.form.get('asset_structure'),
+            'bank_credit_record': request.form.get('bank_credit_record'),
+            'tax_credit_level': request.form.get('tax_credit_level'),
+            'social_security': request.form.get('social_security'),
+            'supply_chain': request.form.get('supply_chain'),
+            'market_position': request.form.get('market_position'),
+            'management_team': request.form.get('management_team'),
+        }
+
+        # 1. 原有规则化评分
+        rule_score, rule_grade, rule_scores, rule_risk = calculate_credit_score(data)
+
+        # 2. 新增机器学习评分
+        ml_score, ml_grade, ml_risk, feat_importance = calculate_ml_credit_score(data)
+
+        # 保存评分结果到数据库
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT id FROM enterprise WHERE user_id=%s", (session['user_id'],))
+        ent_id = cursor.fetchone()['id']
+        # 保存规则化评分
+        cursor.execute(
+            "INSERT INTO credit_assessment (enterprise_id, score_type, score, grade, risk_indicators, assess_time) VALUES (%s, 'rule', %s, %s, %s, NOW())",
+            (ent_id, rule_score, rule_grade, json.dumps(rule_risk))
+        )
+        # 保存机器学习评分
+        cursor.execute(
+            "INSERT INTO credit_assessment (enterprise_id, score_type, score, grade, risk_indicators, assess_time) VALUES (%s, 'ml', %s, %s, %s, NOW())",
+            (ent_id, ml_score, ml_grade, json.dumps(ml_risk))
+        )
+        db.commit()
+        db.close()
+
+        # 传递双模型结果到前端
+        return render_template('enterprise/credit_result.html',
+                               rule_score=rule_score, rule_grade=rule_grade, rule_risk=rule_risk,
+                               ml_score=ml_score, ml_grade=ml_grade, ml_risk=ml_risk,
+                               feat_importance=feat_importance)
+    return render_template('enterprise/credit_assessment.html')
 
 # 风险预警指标计算
 def calculate_risk_indicators(data, scores, total_score):
